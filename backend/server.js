@@ -12,13 +12,11 @@ const PORT = 3001;
 // Configure CORS for production
 const corsOptions = {
   origin: [
-    'http://localhost:3000',  // Local development
-    'https://trading-dashboard-frontend-ch96yb5id-prasannasekaranes-projects.vercel.app',  // Replace with YOUR frontend URL
-    /\.vercel\.app$/  // Allow all Vercel preview deployments
+    'http://localhost:3000',
+    'https://trading-dashboard-frontend-sepia.vercel.app'
   ],
   credentials: true
 };
-
 app.use(cors(corsOptions));
 app.use(express.json());
 
