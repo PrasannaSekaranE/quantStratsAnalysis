@@ -14,7 +14,7 @@ const TradingDashboard = () => {
   const [selectedDate, setSelectedDate] = useState('ALL');
 
   // API Configuration
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+  const API_BASE_URL = 'http://localhost:3001/api';
 
   // Fetch trades from backend
   const fetchTrades = async () => {
@@ -192,12 +192,60 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api
     return 'text-gray-600';
   };
 
+  // Show loader for minimum 1.5 seconds for better UX
+  useEffect(() => {
+    if (!loading && tradesData.length > 0) {
+      const minLoadTime = 1500; // 1.5 seconds
+      const loadEndTime = Date.now();
+      const loadStartTime = loadEndTime - (lastUpdated ? 0 : minLoadTime);
+      const remainingTime = Math.max(0, minLoadTime - (loadEndTime - loadStartTime));
+      
+      if (remainingTime > 0) {
+        setTimeout(() => {
+          setLoading(false);
+        }, remainingTime);
+      }
+    }
+  }, [tradesData]);
+
   if (loading && tradesData.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: '#eaf4f7' }}>
         <div className="text-center">
-          <Loader className="animate-spin mx-auto mb-4" size={48} style={{ color: '#1762C7' }} />
-          <p className="text-xl font-semibold text-gray-700">Loading trades data...</p>
+          {/* Custom Bar Loader */}
+          <div className="mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 100" width="200" height="166" style={{ display: 'block', margin: '0 auto' }}>
+              {/* Bar 1 */}
+              <rect x="12" y="60" width="10" height="40" fill="#034C8C" rx="1">
+                <animate attributeName="height" values="40;70;40" dur="1s" begin="0s" repeatCount="indefinite"
+                         keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1"/>
+                <animate attributeName="y" values="60;30;60" dur="1s" begin="0s" repeatCount="indefinite"
+                         keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1"/>
+              </rect>
+              {/* Bar 2 */}
+              <rect x="37" y="60" width="10" height="40" fill="#03738C" rx="1">
+                <animate attributeName="height" values="40;60;40" dur="1s" begin="0.18s" repeatCount="indefinite"
+                         keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1"/>
+                <animate attributeName="y" values="60;40;60" dur="1s" begin="0.18s" repeatCount="indefinite"
+                         keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1"/>
+              </rect>
+              {/* Bar 3 */}
+              <rect x="62" y="60" width="10" height="40" fill="#038C8C" rx="1">
+                <animate attributeName="height" values="40;80;40" dur="1s" begin="0.36s" repeatCount="indefinite"
+                         keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1"/>
+                <animate attributeName="y" values="60;20;60" dur="1s" begin="0.36s" repeatCount="indefinite"
+                         keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1"/>
+              </rect>
+              {/* Bar 4 */}
+              <rect x="87" y="60" width="10" height="40" fill="#038C7F" rx="1">
+                <animate attributeName="height" values="40;65;40" dur="1s" begin="0.54s" repeatCount="indefinite"
+                         keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1"/>
+                <animate attributeName="y" values="60;35;60" dur="1s" begin="0.54s" repeatCount="indefinite"
+                         keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1"/>
+              </rect>
+            </svg>
+          </div>
+          <p className="text-xl font-semibold text-gray-700">Loading trading data...</p>
         </div>
       </div>
     );
@@ -251,7 +299,7 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api
             }}>
               Quant Strategies Analysis
             </h1>
-            <p className="text-gray-600 text-lg"></p>
+            {/* <p className="text-gray-600 text-lg">Real-time strategy performance analytics</p> */}
             {lastUpdated && (
               <p className="text-sm text-gray-500 mt-1">
                 {/* Last updated: {lastUpdated.toLocaleTimeString('en-IN')} */}
