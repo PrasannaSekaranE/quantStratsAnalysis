@@ -1,0 +1,3 @@
+symbol,entry_time,exit_time,entry_price,exit_price,quantity,position_type,net_pnl,profit_pct,exit_reason,holding_minutes,max_profit_seen,exit_level,hard_stop_915,confluence_trade,oi_signal_pattern,hybrid_signal_type,entry_reason
+360ONE,2025-12-15T09:45:22.506698,2025-12-15T10:05:24.527027,1139.5,1146.9,43,SHORT,-318.2000000000039,-0.6494076349276078,HARD_STOP_LOSS_915,20,0.307152259763054,1146.1,1146.1,True,BEARISH,BEARISH,UNKNOWN
+SIEMENS,2025-12-15T10:02:43.904226,2025-12-15T10:16:19.828389,3127.6,3147.9,15,SHORT,-304.50000000000273,-0.6490599820949029,HARD_STOP_LOSS_915,13,0.0,3142.1,3142.1,True,BEARISH,BEARISH,UNKNOWN

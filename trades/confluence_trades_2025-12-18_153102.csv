@@ -1,0 +1,2 @@
+symbol,entry_time,exit_time,entry_price,exit_price,quantity,position_type,net_pnl,profit_pct,exit_reason,holding_minutes,max_profit_seen,exit_level,hard_stop_915,confluence_trade,oi_signal_pattern,hybrid_signal_type,entry_reason
+UNITDSPR,2025-12-18T09:51:41.563700,2025-12-18T10:22:24.101760,1383.2,1380.2,36,SHORT,108.0,0.2168883747831116,PROFIT_TRAILING_STOP_5MIN,30,0.5205320994794712,1380.9,1410.0,True,STRONG_BEARISH,BEARISH,UNKNOWN

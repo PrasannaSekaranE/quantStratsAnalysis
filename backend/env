@@ -1,0 +1,6 @@
+# Backend Configuration
+PORT=3001
+
+# Directory containing CSV files
+CSV_DIR=D:\\QUANT_DASHBAORD\\Trade_Logs
+

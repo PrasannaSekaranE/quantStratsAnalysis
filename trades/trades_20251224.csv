@@ -1,0 +1,2 @@
+symbol,position_type,entry_time,exit_time,entry_price,exit_price,quantity,pnl,profit_pct,exit_reason,holding_minutes,max_profit_seen,entry_reason,oi_signal_count,trade_number
+COALINDIA,LONG,2025-12-24T09:33:09.185047,2025-12-24T15:31:04.556693,409.55,409.0,122,-67.10000000000139,-0.13429373702844863,SESSION_END,357,0,NORMAL_3RD_OI_WITH_STRONG_BULLISH,35,1

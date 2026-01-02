@@ -1,0 +1,2 @@
+symbol,entry_time,exit_time,entry_price,exit_price,quantity,position_type,net_pnl,profit_pct,exit_reason,holding_minutes,max_profit_seen,exit_level,hard_stop_915,confluence_trade,oi_signal_pattern,hybrid_signal_type,entry_reason
+KAYNES,2025-12-04T09:38:39.336023,2025-12-04T12:48:05.686419,5104.0,5081.0,9,SHORT,207.0,0.4506269592476489,PROFIT_TRAILING_STOP_5MIN,189,0.6073667711598746,5082.5,5307.0,True,BEARISH,BEARISH,UNKNOWN

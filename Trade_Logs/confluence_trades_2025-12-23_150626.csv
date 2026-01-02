@@ -1,0 +1,3 @@
+symbol,entry_time,exit_time,entry_price,exit_price,quantity,position_type,net_pnl,profit_pct,exit_reason,holding_minutes,max_profit_seen,exit_level,hard_stop_915,confluence_trade,oi_signal_pattern,hybrid_signal_type,entry_reason
+KFINTECH,2025-12-23T09:42:19.949129,2025-12-23T09:42:20.400889,1080.5,1080.5,46,SHORT,0.0,0.0,HARD_STOP_LOSS_915,0,0.0,1073.5,1073.5,True,STRONG_BEARISH,BEARISH,UNKNOWN
+COFORGE,2025-12-23T10:02:22.385519,2025-12-23T11:12:19.913895,1787.7,1776.5,27,SHORT,302.4000000000012,0.6265033282989341,PROFIT_TRAILING_STOP_5MIN,69,0.8502545169771238,1777.3,1847.0,True,BEARISH,BEARISH,UNKNOWN
