@@ -29,59 +29,27 @@ const GITHUB_BRANCH = 'main';
 
 // List of CSV files to fetch from GitHub
 // Add all your CSV filenames here
-// const CSV_FILES = [
-//   'confluence_trades_2025-12-04_153100.csv',
-//   'confluence_trades_2025-12-09_153104.csv',
-//   'confluence_trades_2025-12-15_153101.csv',
-//   'confluence_trades_2025-12-17_153104.csv',
-//   'confluence_trades_2025-12-18_153102.csv',
-//   'confluence_trades_2025-12-19_153103.csv',
-//   'confluence_trades_2025-12-23_150626.csv',
-//   'confluence_trades_2025-12-24_153104.csv',
-//   'confluence_trades_2025-12-26_153101.csv',
-//   'confluence_trades_2025-12-29_153101.csv',
-//   'confluence_trades_2025-12-30_153100.csv',
-//   'live_trades_20251231_152554.csv',
-//   'live_trades_20260102_115833.csv',
-//   'trades_20251223.csv',
-//   'trades_20251224.csv',
-//   'trades_20251226.csv',
-//   'trades_20251229.csv',
-//   'trades_20251230.csv',
-//   'trades_20251231.csv'
-// ];
-
-
-
-// Auto-discover all CSV files in the trades folder
-async function getAllCSVFiles() {
-  const url = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/trades?ref=${GITHUB_BRANCH}`;
-  
-  return new Promise((resolve, reject) => {
-    https.get(url, { headers: { 'User-Agent': 'Node.js' } }, (response) => {
-      let data = '';
-      response.on('data', chunk => data += chunk);
-      response.on('end', () => {
-        try {
-          const files = JSON.parse(data);
-          const csvFiles = files
-            .filter(file => file.name.endsWith('.csv'))
-            .map(file => file.name);
-          resolve(csvFiles);
-        } catch (error) {
-          reject(error);
-        }
-      });
-    }).on('error', reject);
-  });
-}
-
-
-    
-    // Rest of the function stays the same...
-
-
-
+const CSV_FILES = [
+  'confluence_trades_2025-12-04_153100.csv',
+  'confluence_trades_2025-12-09_153104.csv',
+  'confluence_trades_2025-12-15_153101.csv',
+  'confluence_trades_2025-12-17_153104.csv',
+  'confluence_trades_2025-12-18_153102.csv',
+  'confluence_trades_2025-12-19_153103.csv',
+  'confluence_trades_2025-12-23_150626.csv',
+  'confluence_trades_2025-12-24_153104.csv',
+  'confluence_trades_2025-12-26_153101.csv',
+  'confluence_trades_2025-12-29_153101.csv',
+  'confluence_trades_2025-12-30_153100.csv',
+  'live_trades_20251231_152554.csv',
+  'live_trades_20260102_115833.csv',
+  'trades_20251223.csv',
+  'trades_20251224.csv',
+  'trades_20251226.csv',
+  'trades_20251229.csv',
+  'trades_20251230.csv',
+  'trades_20251231.csv'
+];
 
 
 /**
@@ -217,8 +185,7 @@ function normalizeTrade(row, filename) {
  */
 async function loadTradesFromGitHub() {
   try {
-    const CSV_FILES = await getAllCSVFiles();  // Auto-discover!
-    console.log(`Found ${CSV_FILES.length} CSV files in GitHub`);
+    console.log('Fetching CSV files from GitHub...');
     
     const fetchPromises = CSV_FILES.map(file => fetchCSVFromGitHub(file));
     const results = await Promise.allSettled(fetchPromises);
