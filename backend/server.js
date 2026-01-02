@@ -24,7 +24,7 @@ app.use(express.json());
 
 // IMPORTANT: Update these with your GitHub repository details
 const GITHUB_USERNAME = 'PrasannaSekaranE';  // ← Change this!
-const GITHUB_REPO = 'trading-quantStratsAnalysis';
+const GITHUB_REPO = 'quantStratsAnalysis';
 const GITHUB_BRANCH = 'main';
 
 // List of CSV files to fetch from GitHub
