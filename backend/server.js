@@ -9,7 +9,17 @@ const app = express();
 const PORT = 3001;
 
 // Middleware
-app.use(cors());
+// Configure CORS for production
+const corsOptions = {
+  origin: [
+    'http://localhost:3000',  // Local development
+    'https://trading-dashboard-frontend-ch96yb5id-prasannasekaranes-projects.vercel.app',  // Replace with YOUR frontend URL
+    /\.vercel\.app$/  // Allow all Vercel preview deployments
+  ],
+  credentials: true
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Configuration - Update this path to your CSV directory
