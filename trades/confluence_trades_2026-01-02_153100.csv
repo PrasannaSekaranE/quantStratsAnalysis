@@ -1,0 +1,2 @@
+symbol,entry_time,exit_time,entry_price,exit_price,quantity,position_type,net_pnl,profit_pct,exit_reason,holding_minutes,max_profit_seen,exit_level,hard_stop_915,confluence_trade,oi_signal_pattern,hybrid_signal_type,entry_reason
+BAJAJHLDNG,2026-01-02T09:57:01.524904,2026-01-02T12:29:13.444095,11195.0,11088.0,4,SHORT,428.0,0.9557838320678875,PROFIT_TRAILING_STOP_5MIN,152,0.9825815096025011,11095.0,11342.0,True,BEARISH,BEARISH,UNKNOWN
