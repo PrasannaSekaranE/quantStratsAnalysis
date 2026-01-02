@@ -1,19 +1,18 @@
 const express = require('express');
 const cors = require('cors');
-const fs = require('fs');
-const path = require('path');
+const https = require('https');
 const csv = require('csv-parser');
-const path = require('path');
 
 const app = express();
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 
 // Production CORS configuration
 const corsOptions = {
   origin: [
-    'http://localhost:3000',  // Local development
-    'https://trading-dashboard-frontend-sepia.vercel.app',  // Production frontend
-    'https://trading-dashboard-frontend-fnwqxynkk-prasannasekaranes-projects.vercel.app'  // Preview URLs
+    'http://localhost:3000',
+    'https://trading-dashboard-frontend-sepia.vercel.app',
+    'https://trading-dashboard-frontend-fnwqxynkk-prasannasekaranes-projects.vercel.app',
+    /\.vercel\.app$/
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -23,38 +22,64 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
-// Configuration - Update this path to your CSV directory
-// const CSV_DIRECTORY = 'D:/QUANT_DASHBAORD/Trade_Logs';
+// IMPORTANT: Update these with your GitHub repository details
+const GITHUB_USERNAME = 'PrasannaSekaranE';  // ← Change this!
+const GITHUB_REPO = 'trading-quantStratsAnalysis';
+const GITHUB_BRANCH = 'main';
 
-// Production-ready CSV directory handling
-const CSV_DIRECTORY = process.env.CSV_DIR || 
-                      process.env.VERCEL 
-                        ? '/tmp/trades'  // Vercel temporary storage
-                        : path.join(__dirname, '../trades'); // Local development
+// List of CSV files to fetch from GitHub
+// Add all your CSV filenames here
+const CSV_FILES = [
+  'confluence_trades_2025-12-04_153100.csv',
+  'confluence_trades_2025-12-09_153104.csv',
+  'confluence_trades_2025-12-15_153101.csv',
+  'confluence_trades_2025-12-17_153104.csv',
+  'confluence_trades_2025-12-18_153102.csv',
+  'confluence_trades_2025-12-19_153103.csv',
+  'confluence_trades_2025-12-23_150626.csv',
+  'confluence_trades_2025-12-24_153104.csv',
+  'confluence_trades_2025-12-26_153101.csv',
+  'confluence_trades_2025-12-29_153101.csv',
+  'confluence_trades_2025-12-30_153100.csv',
+  'live_trades_20251231_152554.csv',
+  'live_trades_20260102_115833.csv',
+  'trades_20251223.csv',
+  'trades_20251224.csv',
+  'trades_20251226.csv',
+  'trades_20251229.csv',
+  'trades_20251230.csv',
+  'trades_20251231.csv'
+];
 
-// Create directory if it doesn't exist (local dev only)
-if (!process.env.VERCEL && !fs.existsSync(CSV_DIRECTORY)) {
-  fs.mkdirSync(CSV_DIRECTORY, { recursive: true });
-}
 
 /**
- * Parse CSV file and return trade data
+ * Fetch CSV content from GitHub raw URL
  */
-async function parseCSV(filePath) {
+async function fetchCSVFromGitHub(filename) {
   return new Promise((resolve, reject) => {
-    const trades = [];
+    const url = `https://raw.githubusercontent.com/${GITHUB_USERNAME}/${GITHUB_REPO}/${GITHUB_BRANCH}/trades/${filename}`;
     
-    fs.createReadStream(filePath)
-      .pipe(csv())
-      .on('data', (row) => {
-        trades.push(row);
-      })
-      .on('end', () => {
-        resolve(trades);
-      })
-      .on('error', (error) => {
-        reject(error);
-      });
+    https.get(url, (response) => {
+      if (response.statusCode !== 200) {
+        reject(new Error(`Failed to fetch ${filename}: ${response.statusCode}`));
+        return;
+      }
+
+      const trades = [];
+      response
+        .pipe(csv())
+        .on('data', (row) => {
+          trades.push(row);
+        })
+        .on('end', () => {
+          resolve({ filename, trades });
+        })
+        .on('error', (error) => {
+          reject(error);
+        });
+    }).on('error', (error) => {
+      reject(error);
+    });
   });
 }
 
@@ -68,14 +93,11 @@ function normalizeTrade(row, filename) {
   const exitTime = row.exit_time || row.Exit_Time || row.EXIT_TIME;
   
   if (entryTime) {
-    // Handle different time formats
     if (entryTime.includes('T')) {
       date = entryTime.split('T')[0];
     } else if (entryTime.includes(' ')) {
-      // Handle "2025-12-31 10:28:38" format
       date = entryTime.split(' ')[0];
     } else if (entryTime.includes(':') && entryTime.length <= 5) {
-      // Handle "09:52" format - use current date or extract from filename
       const dateMatch = filename.match(/(\d{4})-(\d{2})-(\d{2})/);
       if (dateMatch) {
         date = `${dateMatch[1]}-${dateMatch[2]}-${dateMatch[3]}`;
@@ -95,14 +117,11 @@ function normalizeTrade(row, filename) {
     }
   }
 
-  // Get position type from CSV
   let positionType = (row.position_type || row.Position_Type || row.POSITION_TYPE || '').toUpperCase();
   
-  // Determine strategy based on filename and position type
   let strategy = 'Unknown';
   const filenameLower = filename.toLowerCase();
   
-  // Check for G-Blast files (live_trades pattern or nifty in filename)
   const isGBlast = filenameLower.includes('live_trades') || 
                    filenameLower.includes('gblast') || 
                    filenameLower.includes('g-blast') ||
@@ -110,14 +129,12 @@ function normalizeTrade(row, filename) {
   
   if (isGBlast) {
     strategy = 'GBlast';
-    // For G-Blast: BUY_CALL = LONG, BUY_PUT = SHORT
     const direction = (row.direction || row.Direction || row.DIRECTION || '').toUpperCase();
     if (direction === 'BUY_CALL') {
       positionType = 'LONG';
     } else if (direction === 'BUY_PUT') {
       positionType = 'SHORT';
     } else {
-      // Fallback: check signal_type
       const signalType = (row.signal_type || row.Signal_Type || row.SIGNAL_TYPE || '').toUpperCase();
       if (signalType === 'BULLISH') {
         positionType = 'LONG';
@@ -131,13 +148,11 @@ function normalizeTrade(row, filename) {
     strategy = 'TrendFlo';
   }
 
-  // Parse numeric values helper
   const parseFloatSafe = (val) => {
     if (!val || val === '') return 0;
     return Number(val);
   };
 
-  // Extract symbol - for G-Blast, use NIFTY with strike info
   let symbol = row.symbol || row.Symbol || row.SYMBOL || '';
   if (isGBlast && !symbol) {
     const strike = row.entry_strike || row.Entry_Strike || row.ENTRY_STRIKE || '';
@@ -145,10 +160,7 @@ function normalizeTrade(row, filename) {
     symbol = strike && optionType ? `NIFTY ${strike} ${optionType}` : 'NIFTY';
   }
 
-  // Extract P&L - G-Blast uses total_pnl
   const pnl = parseFloatSafe(row.total_pnl || row.net_pnl || row.pnl || row.Net_PnL || row.PNL || row.Total_PnL);
-  
-  // Extract profit percentage - G-Blast uses pnl_pct
   const profitPct = parseFloatSafe(row.pnl_pct || row.profit_pct || row.return_pct || row.Profit_Pct || row.PROFIT_PCT);
 
   return {
@@ -164,43 +176,38 @@ function normalizeTrade(row, filename) {
     exit_reason: row.exit_reason || row.Exit_Reason || row.EXIT_REASON || '',
     quantity: parseFloatSafe(row.quantity || row.quantity_lots || row.Quantity || row.QUANTITY),
     strategy: strategy,
-    source_file: path.basename(filename)
+    source_file: filename
   };
 }
 
 /**
- * Read all CSV files from directory and return normalized trade data
+ * Load trades from GitHub
  */
-async function loadTradesFromDirectory() {
+async function loadTradesFromGitHub() {
   try {
-    const files = fs.readdirSync(CSV_DIRECTORY)
-      .filter(file => file.endsWith('.csv'));
-
-    console.log(`Found ${files.length} CSV files in ${CSV_DIRECTORY}`);
-
+    console.log('Fetching CSV files from GitHub...');
+    
+    const fetchPromises = CSV_FILES.map(file => fetchCSVFromGitHub(file));
+    const results = await Promise.allSettled(fetchPromises);
+    
     const allTrades = [];
-
-    for (const file of files) {
-      const filePath = path.join(CSV_DIRECTORY, file);
-      console.log(`Processing: ${file}`);
-      
-      try {
-        const rows = await parseCSV(filePath);
-        const normalizedTrades = rows.map(row => normalizeTrade(row, file));
+    
+    results.forEach((result, index) => {
+      if (result.status === 'fulfilled') {
+        const { filename, trades } = result.value;
+        console.log(`✓ Loaded ${trades.length} trades from ${filename}`);
         
-        // Filter out invalid trades
+        const normalizedTrades = trades.map(row => normalizeTrade(row, filename));
         const validTrades = normalizedTrades.filter(trade => 
           trade.symbol && trade.position_type && trade.date
         );
         
-        console.log(`  - Loaded ${validTrades.length} valid trades`);
         allTrades.push(...validTrades);
-      } catch (error) {
-        console.error(`Error processing ${file}:`, error.message);
+      } else {
+        console.error(`✗ Failed to load ${CSV_FILES[index]}:`, result.reason.message);
       }
-    }
+    });
 
-    // Sort by date (newest first)
     allTrades.sort((a, b) => {
       const dateA = new Date(a.date + ' ' + (a.entry_time || '00:00:00'));
       const dateB = new Date(b.date + ' ' + (b.entry_time || '00:00:00'));
@@ -210,7 +217,7 @@ async function loadTradesFromDirectory() {
     console.log(`Total trades loaded: ${allTrades.length}`);
     return allTrades;
   } catch (error) {
-    console.error('Error loading trades:', error);
+    console.error('Error loading trades from GitHub:', error);
     return [];
   }
 }
@@ -229,10 +236,7 @@ function calculateStats(trades) {
       winRate: 0,
       avgProfit: 0,
       avgLoss: 0,
-      avgPnLPerTrade: 0,
-      maxDrawdown: 0,
-      drawdownPeriods: 0,
-      timeUnderwater: 0
+      avgPnLPerTrade: 0
     };
   }
 
@@ -245,9 +249,6 @@ function calculateStats(trades) {
   const avgLoss = losers.length > 0 ? losers.reduce((sum, t) => sum + t.net_pnl, 0) / losers.length : 0;
   const avgPnLPerTrade = totalPnL / trades.length;
 
-  // Calculate Drawdown Metrics
-  const drawdownMetrics = calculateDrawdownMetrics(trades);
-
   return {
     totalTrades: trades.length,
     totalPnL,
@@ -257,147 +258,23 @@ function calculateStats(trades) {
     winRate,
     avgProfit,
     avgLoss,
-    avgPnLPerTrade,
-    ...drawdownMetrics
+    avgPnLPerTrade
   };
 }
 
-/**
- * Calculate drawdown metrics from trades (same logic as SSE_Metrics.py)
- */
-function calculateDrawdownMetrics(trades) {
-  if (trades.length === 0) {
-    return {
-      maxDrawdown: 0,
-      maxDrawdownPercent: 0,
-      drawdownPeriods: 0,
-      avgDrawdownDuration: 0,
-      maxDrawdownDuration: 0,
-      timeUnderwater: 0,
-      currentDrawdown: 0,
-      drawdownHistory: []
-    };
-  }
-
-  // Sort trades by date and time
-  const sortedTrades = [...trades].sort((a, b) => {
-    const dateA = new Date(a.date + ' ' + (a.entry_time || '00:00:00'));
-    const dateB = new Date(b.date + ' ' + (b.entry_time || '00:00:00'));
-    return dateA - dateB;
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    message: 'Trading Dashboard Backend is running'
   });
+});
 
-  // Calculate cumulative equity curve
-  let cumulativePnL = 0;
-  let peak = 0;
-  let maxDrawdown = 0;
-  let maxDrawdownPercent = 0;
-  let currentDrawdown = 0;
-  let drawdownPeriods = [];
-  let inDrawdown = false;
-  let drawdownStart = null;
-  let drawdownDays = 0;
-  let totalDaysInDrawdown = 0;
-
-  const equityCurve = sortedTrades.map((trade, index) => {
-    cumulativePnL += trade.net_pnl;
-    
-    // Update peak
-    if (cumulativePnL > peak) {
-      peak = cumulativePnL;
-      
-      // If we were in drawdown, end it
-      if (inDrawdown) {
-        drawdownPeriods.push({
-          start: drawdownStart,
-          end: trade.date,
-          duration: drawdownDays,
-          maxDD: maxDrawdown
-        });
-        inDrawdown = false;
-        drawdownDays = 0;
-      }
-    }
-    
-    // Calculate current drawdown
-    const drawdown = cumulativePnL - peak;
-    const drawdownPercent = peak !== 0 ? (drawdown / peak) * 100 : 0;
-    
-    // Track if we're in drawdown
-    if (drawdown < 0) {
-      if (!inDrawdown) {
-        inDrawdown = true;
-        drawdownStart = trade.date;
-        drawdownDays = 1;
-      } else {
-        drawdownDays++;
-      }
-      totalDaysInDrawdown++;
-    }
-    
-    // Update max drawdown
-    if (drawdown < maxDrawdown) {
-      maxDrawdown = drawdown;
-    }
-    if (drawdownPercent < maxDrawdownPercent) {
-      maxDrawdownPercent = drawdownPercent;
-    }
-    
-    currentDrawdown = drawdown;
-    
-    return {
-      date: trade.date,
-      equity: cumulativePnL,
-      peak: peak,
-      drawdown: drawdown,
-      drawdownPercent: drawdownPercent
-    };
-  });
-
-  // If still in drawdown at the end
-  if (inDrawdown && sortedTrades.length > 0) {
-    drawdownPeriods.push({
-      start: drawdownStart,
-      end: sortedTrades[sortedTrades.length - 1].date,
-      duration: drawdownDays,
-      maxDD: maxDrawdown
-    });
-  }
-
-  // Calculate average drawdown duration
-  const avgDrawdownDuration = drawdownPeriods.length > 0
-    ? drawdownPeriods.reduce((sum, p) => sum + p.duration, 0) / drawdownPeriods.length
-    : 0;
-
-  // Calculate max drawdown duration
-  const maxDrawdownDuration = drawdownPeriods.length > 0
-    ? Math.max(...drawdownPeriods.map(p => p.duration))
-    : 0;
-
-  // Calculate time underwater percentage
-  const timeUnderwater = sortedTrades.length > 0
-    ? (totalDaysInDrawdown / sortedTrades.length) * 100
-    : 0;
-
-  return {
-    maxDrawdown: Math.abs(maxDrawdown),
-    maxDrawdownPercent: Math.abs(maxDrawdownPercent),
-    drawdownPeriods: drawdownPeriods.length,
-    avgDrawdownDuration: avgDrawdownDuration,
-    maxDrawdownDuration: maxDrawdownDuration,
-    timeUnderwater: timeUnderwater,
-    currentDrawdown: currentDrawdown,
-    drawdownHistory: equityCurve
-  };
-}
-
-// API Routes
-
-/**
- * GET /api/trades - Get all trades
- */
+// Get all trades
 app.get('/api/trades', async (req, res) => {
   try {
-    const trades = await loadTradesFromDirectory();
+    const trades = await loadTradesFromGitHub();
     
     const stats = {
       ALL: calculateStats(trades),
@@ -421,146 +298,22 @@ app.get('/api/trades', async (req, res) => {
   }
 });
 
-/**
- * GET /api/trades/by-strategy/:strategy - Get trades by strategy
- */
-app.get('/api/trades/by-strategy/:strategy', async (req, res) => {
-  try {
-    const { strategy } = req.params;
-    const allTrades = await loadTradesFromDirectory();
-    
-    const filteredTrades = strategy === 'ALL' 
-      ? allTrades 
-      : allTrades.filter(t => t.strategy === strategy);
+// For Vercel serverless function
+module.exports = app;
 
-    res.json({
-      success: true,
-      strategy,
-      trades: filteredTrades,
-      stats: calculateStats(filteredTrades),
-      timestamp: new Date().toISOString()
-    });
-  } catch (error) {
-    console.error('Error fetching trades by strategy:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-});
-
-/**
- * GET /api/trades/by-date/:date - Get trades by date
- */
-app.get('/api/trades/by-date/:date', async (req, res) => {
-  try {
-    const { date } = req.params;
-    const allTrades = await loadTradesFromDirectory();
-    
-    const filteredTrades = allTrades.filter(t => t.date === date);
-
-    res.json({
-      success: true,
-      date,
-      trades: filteredTrades,
-      stats: calculateStats(filteredTrades),
-      timestamp: new Date().toISOString()
-    });
-  } catch (error) {
-    console.error('Error fetching trades by date:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-});
-
-/**
- * GET /api/drawdown - Get detailed drawdown analysis
- */
-app.get('/api/drawdown', async (req, res) => {
-  try {
-    const allTrades = await loadTradesFromDirectory();
-    const stats = {
-      ALL: calculateStats(allTrades),
-      iTrack: calculateStats(allTrades.filter(t => t.strategy === 'iTrack')),
-      TrendFlo: calculateStats(allTrades.filter(t => t.strategy === 'TrendFlo')),
-      GBlast: calculateStats(allTrades.filter(t => t.strategy === 'GBlast'))
-    };
-
-    res.json({
-      success: true,
-      drawdownMetrics: {
-        ALL: {
-          maxDrawdown: stats.ALL.maxDrawdown,
-          maxDrawdownPercent: stats.ALL.maxDrawdownPercent,
-          drawdownPeriods: stats.ALL.drawdownPeriods,
-          avgDrawdownDuration: stats.ALL.avgDrawdownDuration,
-          maxDrawdownDuration: stats.ALL.maxDrawdownDuration,
-          timeUnderwater: stats.ALL.timeUnderwater,
-          currentDrawdown: stats.ALL.currentDrawdown,
-          drawdownHistory: stats.ALL.drawdownHistory
-        },
-        iTrack: {
-          maxDrawdown: stats.iTrack.maxDrawdown,
-          maxDrawdownPercent: stats.iTrack.maxDrawdownPercent,
-          drawdownPeriods: stats.iTrack.drawdownPeriods,
-          timeUnderwater: stats.iTrack.timeUnderwater
-        },
-        TrendFlo: {
-          maxDrawdown: stats.TrendFlo.maxDrawdown,
-          maxDrawdownPercent: stats.TrendFlo.maxDrawdownPercent,
-          drawdownPeriods: stats.TrendFlo.drawdownPeriods,
-          timeUnderwater: stats.TrendFlo.timeUnderwater
-        },
-        GBlast: {
-          maxDrawdown: stats.GBlast.maxDrawdown,
-          maxDrawdownPercent: stats.GBlast.maxDrawdownPercent,
-          drawdownPeriods: stats.GBlast.drawdownPeriods,
-          timeUnderwater: stats.GBlast.timeUnderwater
-        }
-      },
-      timestamp: new Date().toISOString()
-    });
-  } catch (error) {
-    console.error('Error calculating drawdown:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-});
-
-/**
- * GET /api/health - Health check
- */
-app.get('/api/health', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Trading Dashboard API is running',
-    csvDirectory: CSV_DIRECTORY,
-    timestamp: new Date().toISOString()
-  });
-});
-
-// Start server
-app.listen(PORT, () => {
-  console.log(`
+// For local development
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`
 ╔═══════════════════════════════════════════════════════════╗
 ║         Trading Dashboard Backend Server                 ║
 ╚═══════════════════════════════════════════════════════════╝
-
 🚀 Server running on: http://localhost:${PORT}
-📁 CSV Directory: ${CSV_DIRECTORY}
+📁 Fetching CSVs from GitHub
 📊 API Endpoints:
    - GET /api/health
    - GET /api/trades
-   - GET /api/trades/by-strategy/:strategy
-   - GET /api/trades/by-date/:date
-   - GET /api/drawdown
-
 Ready to serve trade data!
-  `);
-});
-
-module.exports = app;
+    `);
+  });
+}
