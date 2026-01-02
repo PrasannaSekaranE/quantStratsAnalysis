@@ -8,15 +8,18 @@ const path = require('path');
 const app = express();
 const PORT = 3001;
 
-// Middleware
-// Configure CORS for production
+// Production CORS configuration
 const corsOptions = {
   origin: [
-    'http://localhost:3000',
-    'https://trading-dashboard-frontend-sepia.vercel.app'
+    'http://localhost:3000',  // Local development
+    'https://trading-dashboard-frontend-sepia.vercel.app',  // Production frontend
+    'https://trading-dashboard-frontend-fnwqxynkk-prasannasekaranes-projects.vercel.app'  // Preview URLs
   ],
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 };
+
 app.use(cors(corsOptions));
 app.use(express.json());
 
