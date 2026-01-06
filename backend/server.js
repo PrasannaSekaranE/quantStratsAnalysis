@@ -49,6 +49,8 @@ const CSV_FILES = [
   'trades_20260105.csv',
   'confluence_trades_2026-01-05_153102.csv',
   'live_trades_20260106_093737.csv',
+  'confluence_trades_2026-01-06_153104.csv',
+  'trades_20260106.csv',
   'trades_20251223.csv',
   'trades_20251224.csv',
   'trades_20251226.csv',
