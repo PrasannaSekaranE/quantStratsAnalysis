@@ -1,0 +1,2 @@
+symbol,position_type,entry_time,exit_time,entry_price,exit_price,quantity,pnl,profit_pct,exit_reason,holding_minutes,max_profit_seen,entry_reason,oi_signal_count,trade_number,exit_level,hard_stop_915
+IEX,LONG,2026-01-09T09:54:32.411959,2026-01-09T10:36:05.759779,157.18,147.11,318,-3202.259999999998,-6.406667514951008,HARD_STOP_LOSS_915,41,1.654154472579205,NORMAL_3RD_OI_WITH_STRONG_BULLISH,102,1,149.48,149.48
