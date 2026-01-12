@@ -1,0 +1,2 @@
+symbol,position_type,entry_time,exit_time,entry_price,exit_price,quantity,pnl,profit_pct,exit_reason,holding_minutes,max_profit_seen,entry_reason,oi_signal_count,trade_number
+BSE,LONG,2026-01-12T10:47:50.024510,2026-01-12T15:31:03.807350,2759.0,2753.1,18,-106.20000000000164,-0.2138455962305216,SESSION_END,283,0,NORMAL_3RD_OI_WITH_STRONG_BULLISH,133,1
