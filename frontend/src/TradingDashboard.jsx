@@ -14,17 +14,17 @@ const TradingDashboard = () => {
   const [selectedDate, setSelectedDate] = useState('ALL');
 
   // API Configuration
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+  const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
   // Fetch trades from backend
   const fetchTrades = async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const response = await fetch(`${API_BASE_URL}/trades`);
       const data = await response.json();
-      
+
       if (data.success) {
         setTradesData(data.trades);
         setStats(data.stats);
@@ -46,17 +46,17 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api
 
   const filteredTrades = useMemo(() => {
     let filtered = tradesData;
-    
+
     // Filter by strategy
     if (activeStrategy !== 'ALL') {
       filtered = filtered.filter(trade => trade.strategy === activeStrategy);
     }
-    
+
     // Filter by date
     if (selectedDate !== 'ALL') {
       filtered = filtered.filter(trade => trade.date === selectedDate);
     }
-    
+
     return filtered;
   }, [tradesData, activeStrategy, selectedDate]);
 
@@ -77,12 +77,12 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api
     sorted.sort((a, b) => {
       let aVal = a[sortConfig.key];
       let bVal = b[sortConfig.key];
-      
+
       if (sortConfig.key === 'entry_time' || sortConfig.key === 'exit_time' || sortConfig.key === 'date') {
         aVal = new Date(aVal);
         bVal = new Date(bVal);
       }
-      
+
       if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
       if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
       return 0;
@@ -133,7 +133,8 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api
     const displays = {
       'iTrack': { name: 'iTrack', subtitle: 'Live', positionType: 'SHORT' },
       'TrendFlo': { name: 'TrendFlo', subtitle: 'Paper', positionType: 'LONG' },
-      'GBlast': { name: 'G-Blast', subtitle: 'Paper', positionType: 'OPTIONS' }
+      'GBlast': { name: 'G-Blast', subtitle: 'Paper', positionType: 'OPTIONS' },
+      'GBlastV2': { name: 'G-Blast (v2)', subtitle: 'Paper', positionType: 'OPTIONS' }
     };
     return displays[strategy] || { name: strategy, subtitle: '', positionType: '' };
   };
@@ -199,7 +200,7 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api
       const loadEndTime = Date.now();
       const loadStartTime = loadEndTime - (lastUpdated ? 0 : minLoadTime);
       const remainingTime = Math.max(0, minLoadTime - (loadEndTime - loadStartTime));
-      
+
       if (remainingTime > 0) {
         setTimeout(() => {
           setLoading(false);
@@ -218,30 +219,30 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api
               {/* Bar 1 */}
               <rect x="12" y="60" width="10" height="40" fill="#034C8C" rx="1">
                 <animate attributeName="height" values="40;70;40" dur="1s" begin="0s" repeatCount="indefinite"
-                         keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1"/>
+                  keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1" />
                 <animate attributeName="y" values="60;30;60" dur="1s" begin="0s" repeatCount="indefinite"
-                         keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1"/>
+                  keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1" />
               </rect>
               {/* Bar 2 */}
               <rect x="37" y="60" width="10" height="40" fill="#03738C" rx="1">
                 <animate attributeName="height" values="40;60;40" dur="1s" begin="0.18s" repeatCount="indefinite"
-                         keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1"/>
+                  keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1" />
                 <animate attributeName="y" values="60;40;60" dur="1s" begin="0.18s" repeatCount="indefinite"
-                         keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1"/>
+                  keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1" />
               </rect>
               {/* Bar 3 */}
               <rect x="62" y="60" width="10" height="40" fill="#038C8C" rx="1">
                 <animate attributeName="height" values="40;80;40" dur="1s" begin="0.36s" repeatCount="indefinite"
-                         keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1"/>
+                  keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1" />
                 <animate attributeName="y" values="60;20;60" dur="1s" begin="0.36s" repeatCount="indefinite"
-                         keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1"/>
+                  keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1" />
               </rect>
               {/* Bar 4 */}
               <rect x="87" y="60" width="10" height="40" fill="#038C7F" rx="1">
                 <animate attributeName="height" values="40;65;40" dur="1s" begin="0.54s" repeatCount="indefinite"
-                         keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1"/>
+                  keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1" />
                 <animate attributeName="y" values="60;35;60" dur="1s" begin="0.54s" repeatCount="indefinite"
-                         keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1"/>
+                  keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1" />
               </rect>
             </svg>
           </div>
@@ -276,21 +277,21 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api
       <div className="mb-8 flex justify-between items-start">
         <div className="flex items-center gap-6">
           {!logoError ? (
-            <img 
-              src="/logo.png" 
-              alt="XIRR Logo" 
+            <img
+              src="/logo.png"
+              alt="XIRR Logo"
               className="h-16 w-auto object-contain"
               onError={() => setLogoError(true)}
             />
           ) : (
-            <div className="h-16 w-16 rounded-xl flex items-center justify-center" 
-                 style={{ background: 'linear-gradient(135deg, rgb(31, 168, 166) 0%, rgb(23, 98, 199) 100%)' }}>
+            <div className="h-16 w-16 rounded-xl flex items-center justify-center"
+              style={{ background: 'linear-gradient(135deg, rgb(31, 168, 166) 0%, rgb(23, 98, 199) 100%)' }}>
               <BarChart3 className="text-white" size={32} />
             </div>
           )}
-          
+
           <div>
-            <h1 className="text-5xl font-bold mb-2" style={{ 
+            <h1 className="text-5xl font-bold mb-2" style={{
               background: 'linear-gradient(135deg, rgb(31, 168, 166) 0%, rgb(23, 98, 199) 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
@@ -307,7 +308,7 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api
             )}
           </div>
         </div>
-        
+
         <button
           onClick={fetchTrades}
           disabled={loading}
@@ -321,7 +322,7 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api
 
       {/* Strategy Tabs - Updated Format */}
       <div className="flex gap-3 mb-8 flex-wrap">
-        {['ALL', 'iTrack', 'TrendFlo', 'GBlast'].map((strategy) => {
+        {['ALL', 'iTrack', 'TrendFlo', 'GBlast', 'GBlastV2'].map((strategy) => {
           const display = strategy !== 'ALL' ? getStrategyDisplay(strategy) : null;
           return (
             <button
@@ -329,12 +330,12 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api
               onClick={() => setActiveStrategy(strategy)}
               className="px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 transform hover:scale-105 hover:shadow-2xl"
               style={{
-                background: activeStrategy === strategy 
+                background: activeStrategy === strategy
                   ? 'linear-gradient(135deg, rgb(31, 168, 166) 0%, rgb(23, 98, 199) 100%)'
                   : 'white',
                 color: activeStrategy === strategy ? 'white' : '#1762C7',
-                boxShadow: activeStrategy === strategy 
-                  ? '0 8px 25px rgba(31, 168, 166, 0.4)' 
+                boxShadow: activeStrategy === strategy
+                  ? '0 8px 25px rgba(31, 168, 166, 0.4)'
                   : '0 4px 12px rgba(0,0,0,0.1)'
               }}
             >
@@ -375,8 +376,8 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api
               <div className={`p-3 rounded-xl ${currentStats.totalPnL >= 0 ? 'bg-emerald-500' : 'bg-red-500'}`}>
                 <IndianRupee className="text-white" size={28} />
               </div>
-              {currentStats.totalPnL >= 0 ? 
-                <ArrowUpRight className="text-emerald-500" size={28} /> : 
+              {currentStats.totalPnL >= 0 ?
+                <ArrowUpRight className="text-emerald-500" size={28} /> :
                 <ArrowDownRight className="text-red-500" size={28} />
               }
             </div>
@@ -494,7 +495,7 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api
               )}
             </div>
           </div>
-          
+
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -534,8 +535,8 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api
                         <Calendar size={48} className="text-gray-400" />
                         <p className="text-xl font-semibold text-gray-600">No trades found</p>
                         <p className="text-sm text-gray-500">
-                          {selectedDate !== 'ALL' 
-                            ? `No trades on ${formatDate(selectedDate)}` 
+                          {selectedDate !== 'ALL'
+                            ? `No trades on ${formatDate(selectedDate)}`
                             : 'No trades available for the selected filters'}
                         </p>
                         {selectedDate !== 'ALL' && (
@@ -552,78 +553,77 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api
                   </tr>
                 ) : (
                   sortedTrades.map((trade, index) => {
-                  const display = getStrategyDisplay(trade.strategy);
-                  return (
-                    <tr 
-                      key={index}
-                      className="border-b border-gray-100 hover:bg-gradient-to-r hover:from-cyan-50 hover:to-blue-50 transition-all duration-200"
-                      style={{ animation: `slideIn 0.4s ease-out ${index * 0.05}s both` }}
-                    >
-                      <td className="px-6 py-5">
-                        <div className="flex items-center gap-2">
-                          <Calendar size={16} className="text-gray-400" />
-                          <span className="font-semibold text-gray-700">{formatDate(trade.date)}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-5">
-                        <div className="flex items-center gap-3">
-                          <div className={`p-3 rounded-xl shadow-md ${trade.position_type === 'LONG' ? 'bg-gradient-to-br from-emerald-400 to-emerald-600' : 'bg-gradient-to-br from-red-400 to-red-600'}`}>
-                            {trade.position_type === 'LONG' ? <TrendingUp className="text-white" size={20} /> : <TrendingDown className="text-white" size={20} />}
+                    const display = getStrategyDisplay(trade.strategy);
+                    return (
+                      <tr
+                        key={index}
+                        className="border-b border-gray-100 hover:bg-gradient-to-r hover:from-cyan-50 hover:to-blue-50 transition-all duration-200"
+                        style={{ animation: `slideIn 0.4s ease-out ${index * 0.05}s both` }}
+                      >
+                        <td className="px-6 py-5">
+                          <div className="flex items-center gap-2">
+                            <Calendar size={16} className="text-gray-400" />
+                            <span className="font-semibold text-gray-700">{formatDate(trade.date)}</span>
                           </div>
-                          <div>
-                            <p className="font-bold text-gray-900 text-lg">{trade.symbol}</p>
-                            <p className="text-xs font-semibold" style={{ color: '#1762C7' }}>
-                              {display.name} ({display.subtitle})
-                            </p>
+                        </td>
+                        <td className="px-6 py-5">
+                          <div className="flex items-center gap-3">
+                            <div className={`p-3 rounded-xl shadow-md ${trade.position_type === 'LONG' ? 'bg-gradient-to-br from-emerald-400 to-emerald-600' : 'bg-gradient-to-br from-red-400 to-red-600'}`}>
+                              {trade.position_type === 'LONG' ? <TrendingUp className="text-white" size={20} /> : <TrendingDown className="text-white" size={20} />}
+                            </div>
+                            <div>
+                              <p className="font-bold text-gray-900 text-lg">{trade.symbol}</p>
+                              <p className="text-xs font-semibold" style={{ color: '#1762C7' }}>
+                                {display.name} ({display.subtitle})
+                              </p>
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-5">
-                        <div className="flex items-center gap-2">
-                          <Clock size={18} className="text-gray-400" />
-                          <span className="text-gray-700 font-medium">{formatTime(trade.entry_time)}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-5">
-                        <div className="flex items-center gap-2">
-                          <Clock size={18} className="text-gray-400" />
-                          <span className="text-gray-700 font-medium">{formatTime(trade.exit_time)}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-5 font-bold text-gray-800 text-lg">{formatPrice(trade.entry_price)}</td>
-                      <td className="px-6 py-5 font-bold text-gray-800 text-lg">{formatPrice(trade.exit_price)}</td>
-                      <td className="px-6 py-5">
-                        <div className="flex items-center gap-2">
-                          {trade.net_pnl >= 0 ? <ArrowUpRight size={20} className="text-emerald-600" /> : <ArrowDownRight size={20} className="text-red-600" />}
-                          <span className={`font-bold text-lg ${trade.net_pnl >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                            {formatPnL(trade.net_pnl)}
+                        </td>
+                        <td className="px-6 py-5">
+                          <div className="flex items-center gap-2">
+                            <Clock size={18} className="text-gray-400" />
+                            <span className="text-gray-700 font-medium">{formatTime(trade.entry_time)}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-5">
+                          <div className="flex items-center gap-2">
+                            <Clock size={18} className="text-gray-400" />
+                            <span className="text-gray-700 font-medium">{formatTime(trade.exit_time)}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-5 font-bold text-gray-800 text-lg">{formatPrice(trade.entry_price)}</td>
+                        <td className="px-6 py-5 font-bold text-gray-800 text-lg">{formatPrice(trade.exit_price)}</td>
+                        <td className="px-6 py-5">
+                          <div className="flex items-center gap-2">
+                            {trade.net_pnl >= 0 ? <ArrowUpRight size={20} className="text-emerald-600" /> : <ArrowDownRight size={20} className="text-red-600" />}
+                            <span className={`font-bold text-lg ${trade.net_pnl >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                              {formatPnL(trade.net_pnl)}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-5">
+                          <span className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-bold shadow-md ${trade.profit_pct >= 0 ? 'bg-gradient-to-r from-emerald-400 to-emerald-600 text-white' : 'bg-gradient-to-r from-red-400 to-red-600 text-white'
+                            }`}>
+                            {formatPercentage(trade.profit_pct)}
                           </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-5">
-                        <span className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-bold shadow-md ${
-                          trade.profit_pct >= 0 ? 'bg-gradient-to-r from-emerald-400 to-emerald-600 text-white' : 'bg-gradient-to-r from-red-400 to-red-600 text-white'
-                        }`}>
-                          {formatPercentage(trade.profit_pct)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-5">
-                        <div className="flex items-center gap-2">
-                          {trade.exit_reason.includes('PROFIT') || trade.exit_reason.includes('TRAILING') ? (
-                            <CheckCircle size={18} className="text-emerald-600" />
-                          ) : trade.exit_reason.includes('STOP_LOSS') ? (
-                            <XCircle size={18} className="text-red-600" />
-                          ) : (
-                            <AlertCircle size={18} className="text-gray-600" />
-                          )}
-                          <span className={`text-sm font-semibold ${getExitReasonColor(trade.exit_reason)}`}>
-                            {getExitReasonDisplay(trade.exit_reason)}
-                          </span>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
+                        </td>
+                        <td className="px-6 py-5">
+                          <div className="flex items-center gap-2">
+                            {trade.exit_reason.includes('PROFIT') || trade.exit_reason.includes('TRAILING') ? (
+                              <CheckCircle size={18} className="text-emerald-600" />
+                            ) : trade.exit_reason.includes('STOP_LOSS') ? (
+                              <XCircle size={18} className="text-red-600" />
+                            ) : (
+                              <AlertCircle size={18} className="text-gray-600" />
+                            )}
+                            <span className={`text-sm font-semibold ${getExitReasonColor(trade.exit_reason)}`}>
+                              {getExitReasonDisplay(trade.exit_reason)}
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
@@ -644,10 +644,10 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api
               {dailyPnL.map((day, index) => {
                 const maxAbsPnL = Math.max(...dailyPnL.map(d => Math.abs(d.pnl)));
                 const barWidth = maxAbsPnL > 0 ? (Math.abs(day.pnl) / maxAbsPnL) * 100 : 0;
-                
+
                 return (
-                  <div 
-                    key={index} 
+                  <div
+                    key={index}
                     className="p-5 rounded-xl hover:shadow-lg transition-all"
                     style={{ background: day.pnl >= 0 ? '#f0fdf4' : '#fef2f2' }}
                   >
@@ -657,7 +657,7 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api
                         <p className="font-bold text-gray-800">{formatDate(day.date)}</p>
                         <p className="text-xs text-gray-600">{day.trades} trades</p>
                       </div>
-                      
+
                       <div className="flex-1">
                         <div className="flex items-center gap-4 mb-2">
                           <p className={`text-2xl font-bold ${day.pnl >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
@@ -668,9 +668,9 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api
                             <span className="text-red-600 font-semibold">✗ {day.losers}</span>
                           </div>
                         </div>
-                        
+
                         <div className="relative h-3 bg-gray-200 rounded-full overflow-hidden">
-                          <div 
+                          <div
                             className={`absolute h-full transition-all duration-500 ${day.pnl >= 0 ? 'bg-emerald-500' : 'bg-red-500'}`}
                             style={{ width: `${barWidth}%` }}
                           />
@@ -693,10 +693,10 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api
               {cumulativePnL.map((day, index) => {
                 const maxCumulative = Math.max(...cumulativePnL.map(d => Math.abs(d.cumulative)));
                 const progressWidth = maxCumulative > 0 ? (Math.abs(day.cumulative) / maxCumulative) * 100 : 0;
-                
+
                 return (
-                  <div 
-                    key={index} 
+                  <div
+                    key={index}
                     className="p-4 rounded-xl hover:shadow-lg transition-all bg-gradient-to-r from-gray-50 to-white"
                   >
                     <div className="flex items-center justify-between mb-2">
@@ -713,9 +713,9 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api
                         </span>
                       </div>
                     </div>
-                    
+
                     <div className="relative h-2 bg-gray-200 rounded-full overflow-hidden">
-                      <div 
+                      <div
                         className={`h-full transition-all duration-700 ${day.cumulative >= 0 ? 'bg-gradient-to-r from-emerald-400 to-emerald-600' : 'bg-gradient-to-r from-red-400 to-red-600'}`}
                         style={{ width: `${progressWidth}%` }}
                       />
@@ -724,7 +724,7 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api
                 );
               })}
             </div>
-            
+
             {cumulativePnL.length > 0 && (
               <div className="mt-8 p-6 rounded-xl" style={{ background: 'linear-gradient(135deg, rgb(31, 168, 166) 0%, rgb(23, 98, 199) 100%)' }}>
                 <div className="text-center text-white">
@@ -752,9 +752,9 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api
                     <span className="font-bold" style={{ color: '#1762C7' }}>{stats.iTrack.totalTrades} trades</span>
                   </div>
                   <div className="h-4 bg-gray-200 rounded-full overflow-hidden">
-                    <div 
+                    <div
                       className="h-full"
-                      style={{ 
+                      style={{
                         width: `${(stats.iTrack.totalTrades / stats.ALL.totalTrades) * 100}%`,
                         background: 'linear-gradient(135deg, rgb(31, 168, 166) 0%, rgb(23, 98, 199) 100%)'
                       }}
@@ -770,9 +770,9 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api
                     <span className="font-bold" style={{ color: '#1762C7' }}>{stats.TrendFlo.totalTrades} trades</span>
                   </div>
                   <div className="h-4 bg-gray-200 rounded-full overflow-hidden">
-                    <div 
+                    <div
                       className="h-full"
-                      style={{ 
+                      style={{
                         width: `${(stats.TrendFlo.totalTrades / stats.ALL.totalTrades) * 100}%`,
                         background: 'linear-gradient(135deg, rgb(31, 168, 166) 0%, rgb(23, 98, 199) 100%)'
                       }}
@@ -788,9 +788,9 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api
                     <span className="font-bold" style={{ color: '#1762C7' }}>{stats.GBlast.totalTrades} trades</span>
                   </div>
                   <div className="h-4 bg-gray-200 rounded-full overflow-hidden">
-                    <div 
+                    <div
                       className="h-full"
-                      style={{ 
+                      style={{
                         width: `${(stats.GBlast.totalTrades / stats.ALL.totalTrades) * 100}%`,
                         background: 'linear-gradient(135deg, rgb(31, 168, 166) 0%, rgb(23, 98, 199) 100%)'
                       }}
@@ -798,6 +798,24 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api
                   </div>
                   <p className={`text-sm mt-2 font-semibold ${stats.GBlast.totalPnL >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
                     P&L: {formatPnL(stats.GBlast.totalPnL)}
+                  </p>
+                </div>
+                <div>
+                  <div className="flex justify-between mb-2">
+                    <span className="font-semibold text-gray-700">G-Blast (v2) (Paper)</span>
+                    <span className="font-bold" style={{ color: '#1762C7' }}>{stats.GBlastV2?.totalTrades || 0} trades</span>
+                  </div>
+                  <div className="h-4 bg-gray-200 rounded-full overflow-hidden">
+                    <div
+                      className="h-full"
+                      style={{
+                        width: `${((stats.GBlastV2?.totalTrades || 0) / stats.ALL.totalTrades) * 100}%`,
+                        background: 'linear-gradient(135deg, rgb(31, 168, 166) 0%, rgb(23, 98, 199) 100%)'
+                      }}
+                    />
+                  </div>
+                  <p className={`text-sm mt-2 font-semibold ${(stats.GBlastV2?.totalPnL || 0) >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                    P&L: {formatPnL(stats.GBlastV2?.totalPnL || 0)}
                   </p>
                 </div>
               </div>
@@ -814,7 +832,7 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api
                     <span className="font-bold text-emerald-600">{currentStats.winners} trades</span>
                   </div>
                   <div className="h-4 bg-gray-200 rounded-full overflow-hidden">
-                    <div 
+                    <div
                       className="h-full bg-emerald-500"
                       style={{ width: `${(currentStats.winners / currentStats.totalTrades) * 100}%` }}
                     />
@@ -829,7 +847,7 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api
                     <span className="font-bold text-red-600">{currentStats.losers} trades</span>
                   </div>
                   <div className="h-4 bg-gray-200 rounded-full overflow-hidden">
-                    <div 
+                    <div
                       className="h-full bg-red-500"
                       style={{ width: `${(currentStats.losers / currentStats.totalTrades) * 100}%` }}
                     />
@@ -845,7 +863,7 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api
                       <span className="font-bold text-gray-600">{currentStats.breakeven} trades</span>
                     </div>
                     <div className="h-4 bg-gray-200 rounded-full overflow-hidden">
-                      <div 
+                      <div
                         className="h-full bg-gray-400"
                         style={{ width: `${(currentStats.breakeven / currentStats.totalTrades) * 100}%` }}
                       />
@@ -862,8 +880,8 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api
       <div className="mt-8 text-center">
         <p className="text-gray-500 text-sm">
           Showing {sortedTrades.length} trade{sortedTrades.length !== 1 ? 's' : ''} for {
-            activeStrategy === 'ALL' ? 'all strategies' : 
-            `${getStrategyDisplay(activeStrategy).name} (${getStrategyDisplay(activeStrategy).subtitle})`
+            activeStrategy === 'ALL' ? 'all strategies' :
+              `${getStrategyDisplay(activeStrategy).name} (${getStrategyDisplay(activeStrategy).subtitle})`
           }
           {selectedDate !== 'ALL' && ` on ${formatDate(selectedDate)}`}
         </p>

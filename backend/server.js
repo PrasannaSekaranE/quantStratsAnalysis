@@ -68,7 +68,8 @@ const CSV_FILES = [
   'trades_20251226.csv',
   'trades_20251229.csv',
   'trades_20251230.csv',
-  'trades_20251231.csv'
+  'trades_20251231.csv',
+  'live_trades_20260112_160459.csv'
 ];
 
 
@@ -148,7 +149,8 @@ function normalizeTrade(row, filename) {
                    filenameLower.includes('g_blast');
   
   if (isGBlast) {
-    strategy = 'GBlast';
+    const tradeType = row.type || row.Type || row.TYPE || '';
+    strategy = tradeType === 'version_2' ? 'GBlastV2' : 'GBlast';
     const direction = (row.direction || row.Direction || row.DIRECTION || '').toUpperCase();
     if (direction === 'BUY_CALL') {
       positionType = 'LONG';
@@ -300,7 +302,8 @@ app.get('/api/trades', async (req, res) => {
       ALL: calculateStats(trades),
       iTrack: calculateStats(trades.filter(t => t.strategy === 'iTrack')),
       TrendFlo: calculateStats(trades.filter(t => t.strategy === 'TrendFlo')),
-      GBlast: calculateStats(trades.filter(t => t.strategy === 'GBlast'))
+      GBlast: calculateStats(trades.filter(t => t.strategy === 'GBlast')),
+      GBlastV2: calculateStats(trades.filter(t => t.strategy === 'GBlastV2'))
     };
 
     res.json({
