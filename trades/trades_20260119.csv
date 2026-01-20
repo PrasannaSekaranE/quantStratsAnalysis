@@ -1,0 +1,2 @@
+symbol,position_type,entry_time,exit_time,entry_price,exit_price,quantity,pnl,profit_pct,exit_reason,holding_minutes,max_profit_seen,entry_reason,oi_signal_count,trade_number
+BANKINDIA,LONG,2026-01-19T09:54:57.493766,2026-01-19T15:31:00.944779,159.65,160.98,313,416.289999999995,0.833072345756332,SESSION_END,336,2.0732853116191685,NORMAL_3RD_OI_WITH_STRONG_BULLISH,27,1

@@ -1,0 +1,2 @@
+symbol,position_type,entry_time,exit_time,entry_price,exit_price,quantity,pnl,profit_pct,exit_reason,holding_minutes,max_profit_seen,entry_reason,oi_signal_count,trade_number,exit_level,hard_stop_915
+LTF,LONG,2026-01-20T10:01:17.004525,2026-01-20T12:25:42.367367,303.6,298.45,164,-844.6000000000056,-1.6963109354413815,HARD_STOP_LOSS_915,144,0.9222661396574289,NORMAL_3RD_OI_WITH_STRONG_BULLISH,54,1,298.55,298.55
