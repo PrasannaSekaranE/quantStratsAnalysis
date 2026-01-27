@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { TrendingUp, TrendingDown, Clock, Target, AlertCircle, CheckCircle, XCircle, BarChart3, Activity, ArrowUpRight, ArrowDownRight, Calendar, RefreshCw, Loader, PieChart, LineChart, IndianRupee } from 'lucide-react';
+import { TrendingUp, TrendingDown, Clock, Target, AlertCircle, CheckCircle, XCircle, BarChart3, Activity, ArrowUpRight, ArrowDownRight, Calendar, RefreshCw, PieChart, LineChart, IndianRupee } from 'lucide-react';
 
 const TradingDashboard = () => {
   const [activeStrategy, setActiveStrategy] = useState('ALL');
@@ -42,6 +42,7 @@ const TradingDashboard = () => {
 
   useEffect(() => {
     fetchTrades();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const filteredTrades = useMemo(() => {
@@ -208,6 +209,7 @@ const TradingDashboard = () => {
         }, remainingTime);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tradesData]);
 
   if (loading && tradesData.length === 0) {
