@@ -90,7 +90,13 @@ const CSV_FILES = [
   'trades_20251229.csv',
   'trades_20251230.csv',
   'trades_20251231.csv',
-  'live_trades_20260112_160459.csv'
+  'live_trades_20260112_160459.csv',
+  'live_trades_20260127_155504.csv',
+  'live_trades_20260123_101431.csv',
+  'V3_20260123_101337.csv',
+  'V3_20260127_155500.csv',
+  'V1_20260127_155455.csv',
+  'V1_20260123_101921.csv'
 ];
 
 
@@ -100,7 +106,7 @@ const CSV_FILES = [
 async function fetchCSVFromGitHub(filename) {
   return new Promise((resolve, reject) => {
     const url = `https://raw.githubusercontent.com/${GITHUB_USERNAME}/${GITHUB_REPO}/${GITHUB_BRANCH}/trades/${filename}`;
-    
+
     https.get(url, (response) => {
       if (response.statusCode !== 200) {
         reject(new Error(`Failed to fetch ${filename}: ${response.statusCode}`));
@@ -133,7 +139,7 @@ function normalizeTrade(row, filename) {
   let date = null;
   const entryTime = row.entry_time || row.Entry_Time || row.ENTRY_TIME;
   const exitTime = row.exit_time || row.Exit_Time || row.EXIT_TIME;
-  
+
   if (entryTime) {
     if (entryTime.includes('T')) {
       date = entryTime.split('T')[0];
@@ -147,7 +153,7 @@ function normalizeTrade(row, filename) {
         const dateMatch2 = filename.match(/(\d{8})/);
         if (dateMatch2) {
           const dateStr = dateMatch2[1];
-          date = `${dateStr.slice(0,4)}-${dateStr.slice(4,6)}-${dateStr.slice(6,8)}`;
+          date = `${dateStr.slice(0, 4)}-${dateStr.slice(4, 6)}-${dateStr.slice(6, 8)}`;
         }
       }
     }
@@ -160,18 +166,24 @@ function normalizeTrade(row, filename) {
   }
 
   let positionType = (row.position_type || row.Position_Type || row.POSITION_TYPE || '').toUpperCase();
-  
+
   let strategy = 'Unknown';
   const filenameLower = filename.toLowerCase();
-  
-  const isGBlast = filenameLower.includes('live_trades') || 
-                   filenameLower.includes('gblast') || 
-                   filenameLower.includes('g-blast') ||
-                   filenameLower.includes('g_blast');
-  
+
+  const isGBlast = filenameLower.includes('live_trades') ||
+    filenameLower.includes('gblast') ||
+    filenameLower.includes('g-blast') ||
+    filenameLower.includes('g_blast');
+
   if (isGBlast) {
     const tradeType = row.type || row.Type || row.TYPE || '';
-    strategy = tradeType === 'version_2' ? 'GBlastV2' : 'GBlast';
+    if (tradeType === 'version_3') {
+      strategy = 'GBlastV3';
+    } else if (tradeType === 'version_2') {
+      strategy = 'GBlastV2';
+    } else {
+      strategy = 'GBlast';
+    }
     const direction = (row.direction || row.Direction || row.DIRECTION || '').toUpperCase();
     if (direction === 'BUY_CALL') {
       positionType = 'LONG';
@@ -229,22 +241,22 @@ function normalizeTrade(row, filename) {
 async function loadTradesFromGitHub() {
   try {
     console.log('Fetching CSV files from GitHub...');
-    
+
     const fetchPromises = CSV_FILES.map(file => fetchCSVFromGitHub(file));
     const results = await Promise.allSettled(fetchPromises);
-    
+
     const allTrades = [];
-    
+
     results.forEach((result, index) => {
       if (result.status === 'fulfilled') {
         const { filename, trades } = result.value;
         console.log(`✓ Loaded ${trades.length} trades from ${filename}`);
-        
+
         const normalizedTrades = trades.map(row => normalizeTrade(row, filename));
-        const validTrades = normalizedTrades.filter(trade => 
+        const validTrades = normalizedTrades.filter(trade =>
           trade.symbol && trade.position_type && trade.date
         );
-        
+
         allTrades.push(...validTrades);
       } else {
         console.error(`✗ Failed to load ${CSV_FILES[index]}:`, result.reason.message);
@@ -318,13 +330,14 @@ app.get('/api/health', (req, res) => {
 app.get('/api/trades', async (req, res) => {
   try {
     const trades = await loadTradesFromGitHub();
-    
+
     const stats = {
       ALL: calculateStats(trades),
       iTrack: calculateStats(trades.filter(t => t.strategy === 'iTrack')),
       TrendFlo: calculateStats(trades.filter(t => t.strategy === 'TrendFlo')),
       GBlast: calculateStats(trades.filter(t => t.strategy === 'GBlast')),
-      GBlastV2: calculateStats(trades.filter(t => t.strategy === 'GBlastV2'))
+      GBlastV2: calculateStats(trades.filter(t => t.strategy === 'GBlastV2')),
+      GBlastV3: calculateStats(trades.filter(t => t.strategy === 'GBlastV3'))
     };
 
     res.json({

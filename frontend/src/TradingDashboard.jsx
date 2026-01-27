@@ -134,7 +134,8 @@ const TradingDashboard = () => {
       'iTrack': { name: 'iTrack', subtitle: 'Live', positionType: 'SHORT' },
       'TrendFlo': { name: 'TrendFlo', subtitle: 'Paper', positionType: 'LONG' },
       'GBlast': { name: 'G-Blast', subtitle: 'Paper', positionType: 'OPTIONS' },
-      'GBlastV2': { name: 'G-Blast (v2)', subtitle: 'Paper', positionType: 'OPTIONS' }
+      'GBlastV2': { name: 'G-Blast (v2)', subtitle: 'Paper', positionType: 'OPTIONS' },
+      'GBlastV3': { name: 'G-Blast (v3)', subtitle: 'Paper', positionType: 'OPTIONS' }
     };
     return displays[strategy] || { name: strategy, subtitle: '', positionType: '' };
   };
@@ -322,7 +323,7 @@ const TradingDashboard = () => {
 
       {/* Strategy Tabs - Updated Format */}
       <div className="flex gap-3 mb-8 flex-wrap">
-        {['ALL', 'iTrack', 'TrendFlo', 'GBlast', 'GBlastV2'].map((strategy) => {
+        {['ALL', 'iTrack', 'TrendFlo', 'GBlast', 'GBlastV2', 'GBlastV3'].map((strategy) => {
           const display = strategy !== 'ALL' ? getStrategyDisplay(strategy) : null;
           return (
             <button
@@ -816,6 +817,24 @@ const TradingDashboard = () => {
                   </div>
                   <p className={`text-sm mt-2 font-semibold ${(stats.GBlastV2?.totalPnL || 0) >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
                     P&L: {formatPnL(stats.GBlastV2?.totalPnL || 0)}
+                  </p>
+                </div>
+                <div>
+                  <div className="flex justify-between mb-2">
+                    <span className="font-semibold text-gray-700">G-Blast (v3) (Paper)</span>
+                    <span className="font-bold" style={{ color: '#1762C7' }}>{stats.GBlastV3?.totalTrades || 0} trades</span>
+                  </div>
+                  <div className="h-4 bg-gray-200 rounded-full overflow-hidden">
+                    <div
+                      className="h-full"
+                      style={{
+                        width: `${((stats.GBlastV3?.totalTrades || 0) / stats.ALL.totalTrades) * 100}%`,
+                        background: 'linear-gradient(135deg, rgb(31, 168, 166) 0%, rgb(23, 98, 199) 100%)'
+                      }}
+                    />
+                  </div>
+                  <p className={`text-sm mt-2 font-semibold ${(stats.GBlastV3?.totalPnL || 0) >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                    P&L: {formatPnL(stats.GBlastV3?.totalPnL || 0)}
                   </p>
                 </div>
               </div>
