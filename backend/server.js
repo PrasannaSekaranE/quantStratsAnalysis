@@ -173,7 +173,10 @@ function normalizeTrade(row, filename) {
   const isGBlast = filenameLower.includes('live_trades') ||
     filenameLower.includes('gblast') ||
     filenameLower.includes('g-blast') ||
-    filenameLower.includes('g_blast');
+    filenameLower.includes('g_blast') ||
+    filenameLower.startsWith('v1_') ||
+    filenameLower.startsWith('v2_') ||
+    filenameLower.startsWith('v3_');
 
   if (isGBlast) {
     const tradeType = row.type || row.Type || row.TYPE || '';
