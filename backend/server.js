@@ -234,6 +234,11 @@ function normalizeTrade(row, filename) {
     const optionType = row.option_type || row.Option_Type || row.OPTION_TYPE || '';
     symbol = strike && optionType ? `NIFTY ${strike} ${optionType}` : 'NIFTY';
   }
+  if (isBlaze && !symbol) {
+    const strike = row.entry_strike || row.Entry_Strike || row.ENTRY_STRIKE || '';
+    const optionType = row.option_type || row.Option_Type || row.OPTION_TYPE || '';
+    symbol = strike && optionType ? `SENSEX ${strike} ${optionType}` : 'SENSEX';
+  }
 
   const pnl = parseFloatSafe(row.total_pnl || row.net_pnl || row.pnl || row.Net_PnL || row.PNL || row.Total_PnL);
   const profitPct = parseFloatSafe(row.pnl_pct || row.profit_pct || row.return_pct || row.Profit_Pct || row.PROFIT_PCT);
