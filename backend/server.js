@@ -151,7 +151,8 @@ function normalizeTrade(row, filename) {
       date = entryTime.split('T')[0];
     } else if (entryTime.includes(' ')) {
       date = entryTime.split(' ')[0];
-    } else if (entryTime.includes(':') && entryTime.length <= 5) {
+    } else {
+      // Time-only format (MM:SS.ms or similar) - extract date from filename
       const dateMatch = filename.match(/(\d{4})-(\d{2})-(\d{2})/);
       if (dateMatch) {
         date = `${dateMatch[1]}-${dateMatch[2]}-${dateMatch[3]}`;
