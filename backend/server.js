@@ -101,7 +101,8 @@ const CSV_FILES = [
   'V3_20260123_101337.csv',
   'V3_20260127_155500.csv',
   'V1_20260127_155455.csv',
-  'V1_20260123_101921.csv'
+  'V1_20260123_101921.csv',
+  'BLAZE_20260129_151440.csv'
 ];
 
 
@@ -175,6 +176,8 @@ function normalizeTrade(row, filename) {
   let strategy = 'Unknown';
   const filenameLower = filename.toLowerCase();
 
+  const isBlaze = filenameLower.startsWith('blaze_');
+
   const isGBlast = filenameLower.includes('live_trades') ||
     filenameLower.includes('gblast') ||
     filenameLower.includes('g-blast') ||
@@ -183,7 +186,15 @@ function normalizeTrade(row, filename) {
     filenameLower.startsWith('v2_') ||
     filenameLower.startsWith('v3_');
 
-  if (isGBlast) {
+  if (isBlaze) {
+    strategy = 'Blaze';
+    const niftySignal = (row.nifty_signal || row.Nifty_Signal || row.NIFTY_SIGNAL || '').toUpperCase();
+    if (niftySignal === 'BULLISH') {
+      positionType = 'LONG';
+    } else if (niftySignal === 'BEARISH') {
+      positionType = 'SHORT';
+    }
+  } else if (isGBlast) {
     const tradeType = row.type || row.Type || row.TYPE || '';
     if (tradeType === 'version_3') {
       strategy = 'GBlastV3';
@@ -345,7 +356,8 @@ app.get('/api/trades', async (req, res) => {
       TrendFlo: calculateStats(trades.filter(t => t.strategy === 'TrendFlo')),
       GBlast: calculateStats(trades.filter(t => t.strategy === 'GBlast')),
       GBlastV2: calculateStats(trades.filter(t => t.strategy === 'GBlastV2')),
-      GBlastV3: calculateStats(trades.filter(t => t.strategy === 'GBlastV3'))
+      GBlastV3: calculateStats(trades.filter(t => t.strategy === 'GBlastV3')),
+      Blaze: calculateStats(trades.filter(t => t.strategy === 'Blaze'))
     };
 
     res.json({
