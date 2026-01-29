@@ -145,6 +145,11 @@ const TradingDashboard = () => {
   const formatTime = (timestamp) => {
     try {
       if (!timestamp) return 'N/A';
+      // Handle MM:SS.ms format (e.g., "53:04.3" from Blaze CSV)
+      if (/^\d{1,2}:\d{2}\.\d+$/.test(timestamp)) {
+        const [minSec] = timestamp.split('.');
+        return minSec; // Return MM:SS without milliseconds
+      }
       if (timestamp.includes(':') && timestamp.length <= 5) {
         return timestamp;
       }
