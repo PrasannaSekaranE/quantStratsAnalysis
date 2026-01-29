@@ -102,14 +102,40 @@ const CSV_FILES = [
   'V3_20260127_155500.csv',
   'V1_20260127_155455.csv',
   'V1_20260123_101921.csv',
+  'confluence_trades_2026-01-29_153102.csv',
+  'trades_20260129.csv',
   'BLAZE_20260129_151440.csv'
 ];
 
+const fs = require('fs');
+const path = require('path');
 
 /**
- * Fetch CSV content from GitHub raw URL
+ * Fetch CSV content - tries local file first, then falls back to GitHub
  */
 async function fetchCSVFromGitHub(filename) {
+  // Try local file first (for development)
+  const localPath = path.join(__dirname, '..', 'trades', filename);
+
+  if (fs.existsSync(localPath)) {
+    return new Promise((resolve, reject) => {
+      const trades = [];
+      fs.createReadStream(localPath)
+        .pipe(csv())
+        .on('data', (row) => {
+          trades.push(row);
+        })
+        .on('end', () => {
+          console.log(`✓ Loaded ${filename} from local (${trades.length} trades)`);
+          resolve({ filename, trades });
+        })
+        .on('error', (error) => {
+          reject(error);
+        });
+    });
+  }
+
+  // Fall back to GitHub
   return new Promise((resolve, reject) => {
     const url = `https://raw.githubusercontent.com/${GITHUB_USERNAME}/${GITHUB_REPO}/${GITHUB_BRANCH}/trades/${filename}`;
 

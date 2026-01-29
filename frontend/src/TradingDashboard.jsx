@@ -66,6 +66,13 @@ const TradingDashboard = () => {
     return stats[activeStrategy] || stats.ALL;
   }, [stats, activeStrategy]);
 
+  // Set default sort to entry_time ascending for Blaze strategy
+  useEffect(() => {
+    if (activeStrategy === 'Blaze') {
+      setSortConfig({ key: 'entry_time', direction: 'asc' });
+    }
+  }, [activeStrategy]);
+
   const handleSort = (key) => {
     setSortConfig({
       key,
@@ -75,11 +82,33 @@ const TradingDashboard = () => {
 
   const sortedTrades = useMemo(() => {
     const sorted = [...filteredTrades];
+
+    // Helper to parse time strings like "11:53:07" to comparable values
+    const parseTimeString = (timeStr) => {
+      if (!timeStr) return 0;
+      // Handle HH:MM:SS format
+      if (/^\d{1,2}:\d{2}:\d{2}$/.test(timeStr)) {
+        const [h, m, s] = timeStr.split(':').map(Number);
+        return h * 3600 + m * 60 + s;
+      }
+      // Handle HH:MM format
+      if (/^\d{1,2}:\d{2}$/.test(timeStr)) {
+        const [h, m] = timeStr.split(':').map(Number);
+        return h * 3600 + m * 60;
+      }
+      // Fallback to Date parsing
+      const d = new Date(timeStr);
+      return isNaN(d.getTime()) ? 0 : d.getTime();
+    };
+
     sorted.sort((a, b) => {
       let aVal = a[sortConfig.key];
       let bVal = b[sortConfig.key];
 
-      if (sortConfig.key === 'entry_time' || sortConfig.key === 'exit_time' || sortConfig.key === 'date') {
+      if (sortConfig.key === 'entry_time' || sortConfig.key === 'exit_time') {
+        aVal = parseTimeString(aVal);
+        bVal = parseTimeString(bVal);
+      } else if (sortConfig.key === 'date') {
         aVal = new Date(aVal);
         bVal = new Date(bVal);
       }
@@ -145,14 +174,29 @@ const TradingDashboard = () => {
   const formatTime = (timestamp) => {
     try {
       if (!timestamp) return 'N/A';
-      // Handle MM:SS.ms format (e.g., "53:04.3" from Blaze CSV)
+
+      // Handle HH:MM:SS format (e.g., "11:53:07", "12:03:22")
+      if (/^\d{1,2}:\d{2}:\d{2}$/.test(timestamp)) {
+        const [hours, minutes] = timestamp.split(':').map(Number);
+        const period = hours >= 12 ? 'pm' : 'am';
+        const displayHour = hours % 12 || 12;
+        return `${displayHour}:${minutes.toString().padStart(2, '0')} ${period}`;
+      }
+
+      // Handle MM:SS.ms format (e.g., "53:04.3" from old Blaze CSV) - just display as MM:SS
       if (/^\d{1,2}:\d{2}\.\d+$/.test(timestamp)) {
         const [minSec] = timestamp.split('.');
-        return minSec; // Return MM:SS without milliseconds
+        return minSec;
       }
-      if (timestamp.includes(':') && timestamp.length <= 5) {
-        return timestamp;
+
+      // Handle simple HH:MM format
+      if (/^\d{1,2}:\d{2}$/.test(timestamp)) {
+        const [hours, minutes] = timestamp.split(':').map(Number);
+        const period = hours >= 12 ? 'pm' : 'am';
+        const displayHour = hours % 12 || 12;
+        return `${displayHour}:${minutes.toString().padStart(2, '0')} ${period}`;
       }
+
       const date = new Date(timestamp);
       if (isNaN(date.getTime())) return timestamp;
       return date.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
