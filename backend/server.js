@@ -349,18 +349,16 @@ async function loadTradesFromGitHub() {
               // Format: "2026-02-03 09:17:03.973408"
               const timePart = timeStr.split(' ')[1];
               hour = parseInt(timePart.split(':')[0]);
+            } else if (/^\d{1,2}:\d{2}\.\d+$/.test(timeStr)) {
+              // Blaze MM:SS.ms format - treat as morning trade (hour 9)
+              hour = 9;
             } else if (timeStr.includes(':')) {
               const parts = timeStr.split(':');
               if (parts.length >= 3) {
                 // HH:MM:SS
                 hour = parseInt(parts[0]);
               } else if (parts.length === 2) {
-                // MM:SS or HH:MM
-                // For BlazeMM:SS.ms, we'll try to guess. 
-                // However, the user said filter < 14:00.
-                // If it's 16:10, it's actually 4:10 PM if it's HH:MM.
-                // But if it's MM:SS, we don't know. 
-                // Let's assume HH:MM if it's the first part of a time string.
+                // HH:MM
                 hour = parseInt(parts[0]);
               }
             } else if (timeStr.includes('T')) {
