@@ -171,7 +171,8 @@ const TradingDashboard = () => {
       'GBlast': { name: 'G-Blast', subtitle: 'Paper', positionType: 'OPTIONS' },
       'GBlastV2': { name: 'G-Blast (v2)', subtitle: 'Paper', positionType: 'OPTIONS' },
       'GBlastV3': { name: 'G-Blast (v3)', subtitle: 'Paper', positionType: 'OPTIONS' },
-      'Blaze': { name: 'Blaze', subtitle: 'Paper', positionType: 'OPTIONS' }
+      'Blaze': { name: 'Blaze (Existing)', subtitle: 'Paper', positionType: 'OPTIONS' },
+      'BlazeV2': { name: 'Blaze (V2)', subtitle: 'Paper', positionType: 'OPTIONS' }
     };
     return displays[strategy] || { name: strategy, subtitle: '', positionType: '' };
   };
@@ -388,7 +389,7 @@ const TradingDashboard = () => {
 
       {/* Strategy Tabs - Updated Format */}
       <div className="flex gap-3 mb-8 flex-wrap">
-        {['ALL', 'iTrack', 'TrendFlo', 'GBlast', 'GBlastV2', 'GBlastV3', 'Blaze'].map((strategy) => {
+        {['ALL', 'iTrack', 'TrendFlo', 'GBlast', 'GBlastV2', 'GBlastV3', 'Blaze', 'BlazeV2'].map((strategy) => {
           const display = strategy !== 'ALL' ? getStrategyDisplay(strategy) : null;
           return (
             <button

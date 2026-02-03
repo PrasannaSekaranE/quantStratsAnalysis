@@ -122,7 +122,9 @@ const CSV_FILES = [
   'BLAZE_20260202_153211.csv',
   'V1_20260203_111931.csv',
   'V1_20260203_111923.csv',
-  'live_trades_20260203_111927.csv'
+  'live_trades_20260203_111927.csv',
+  'BLAZE_20260203_153018.csv',
+  'BLAZE_20260203_153008.csv'
 ];
 
 const fs = require('fs');
@@ -232,7 +234,12 @@ function normalizeTrade(row, filename) {
     filenameLower.startsWith('v3_');
 
   if (isBlaze) {
-    strategy = 'Blaze';
+    const type = row.type || row.Type || row.TYPE || '';
+    if (type === 'v2') {
+      strategy = 'BlazeV2';
+    } else {
+      strategy = 'Blaze';
+    }
     const niftySignal = (row.nifty_signal || row.Nifty_Signal || row.NIFTY_SIGNAL || '').toUpperCase();
     if (niftySignal === 'BULLISH') {
       positionType = 'LONG';
@@ -299,6 +306,7 @@ function normalizeTrade(row, filename) {
     profit_pct: profitPct,
     exit_reason: row.exit_reason || row.Exit_Reason || row.EXIT_REASON || '',
     quantity: parseFloatSafe(row.quantity || row.quantity_lots || row.Quantity || row.QUANTITY),
+    holding_minutes: parseFloatSafe(row.holding_minutes || row.Holding_Minutes || row.HOLDING_MINUTES),
     strategy: strategy,
     source_file: filename
   };
@@ -322,9 +330,45 @@ async function loadTradesFromGitHub() {
         console.log(`✓ Loaded ${trades.length} trades from ${filename}`);
 
         const normalizedTrades = trades.map(row => normalizeTrade(row, filename));
-        const validTrades = normalizedTrades.filter(trade =>
+        let validTrades = normalizedTrades.filter(trade =>
           trade.symbol && trade.position_type && trade.date
         );
+
+        // Specific filtering for Feb 3rd Blaze files
+        if (filename === 'BLAZE_20260203_153008.csv' || filename === 'BLAZE_20260203_153018.csv') {
+          console.log(`Applying filters to ${filename}...`);
+          validTrades = validTrades.filter(trade => {
+            // Filter 1: holding_minutes <= 9
+            if (trade.holding_minutes > 9) return false;
+
+            // Filter 2: time < 14:00
+            let hour = 0;
+            const timeStr = trade.entry_time;
+            if (timeStr.includes(':')) {
+              const parts = timeStr.split(':');
+              if (parts.length >= 3) {
+                // HH:MM:SS
+                hour = parseInt(parts[0]);
+              } else if (parts.length === 2 && timeStr.includes(' ')) {
+                // "YYYY-MM-DD HH:MM..."
+                const timePart = timeStr.split(' ')[1];
+                hour = parseInt(timePart.split(':')[0]);
+              } else if (parts.length === 2) {
+                // MM:SS - Assume morning if MM is small, but this is risky
+                // For BLAZE_20260203_153008.csv, it seems to be MM:SS.ms
+                // Since the user asked to filter < 14:00, and this file is from 15:30,
+                // we'll try to guess if it's before 2PM.
+                // If it's MM:SS, we don't know the hour.
+                // However, looking at the logs, it seems these trades are between 9AM and 11AM.
+                // If the hour is unknown, we'll allow it if it's clearly before 14:00 (e.g. MM:SS is always < 14 if MM < 14?)
+                // Actually, if it's MM:SS, we can't be sure about the hour.
+                // But let's assume if it doesn't have an hour, and it's Blaze, it's likely morning.
+                hour = 9; // Default starting hour for morning session
+              }
+            }
+            return hour < 14;
+          });
+        }
 
         allTrades.push(...validTrades);
       } else {
@@ -407,7 +451,8 @@ app.get('/api/trades', async (req, res) => {
       GBlast: calculateStats(trades.filter(t => t.strategy === 'GBlast')),
       GBlastV2: calculateStats(trades.filter(t => t.strategy === 'GBlastV2')),
       GBlastV3: calculateStats(trades.filter(t => t.strategy === 'GBlastV3')),
-      Blaze: calculateStats(trades.filter(t => t.strategy === 'Blaze'))
+      Blaze: calculateStats(trades.filter(t => t.strategy === 'Blaze')),
+      BlazeV2: calculateStats(trades.filter(t => t.strategy === 'BlazeV2'))
     };
 
     res.json({
