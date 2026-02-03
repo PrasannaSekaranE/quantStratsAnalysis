@@ -119,7 +119,10 @@ const CSV_FILES = [
   'V1_20260202_154313.csv',
   'trades_20260202.csv',
   'confluence_trades_2026-02-02_153101.csv',
-  'BLAZE_20260202_153211.csv'
+  'BLAZE_20260202_153211.csv',
+  'V1_20260203_111931.csv',
+  'V1_20260203_111923.csv',
+  'live_trades_20260203_111927.csv'
 ];
 
 const fs = require('fs');
