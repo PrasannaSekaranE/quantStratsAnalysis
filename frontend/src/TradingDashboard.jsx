@@ -338,7 +338,7 @@ const TradingDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen p-6" style={{ background: '#eaf4f7' }}>
+    <div className="min-h-screen p-6" style={{ background: '#eaf4f7', zoom: 0.9 }}>
       {/* Header with Logo */}
       <div className="mb-8 flex justify-between items-start">
         <div className="flex items-center gap-6">
