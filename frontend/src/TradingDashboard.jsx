@@ -171,7 +171,7 @@ const TradingDashboard = () => {
       'GBlast': { name: 'G-Blast', subtitle: 'Paper', positionType: 'OPTIONS' },
       'GBlastV2': { name: 'G-Blast (v2)', subtitle: 'Paper', positionType: 'OPTIONS' },
       'GBlastV3': { name: 'G-Blast (v3)', subtitle: 'Paper', positionType: 'OPTIONS' },
-      'Blaze': { name: 'Blaze (Existing)', subtitle: 'Paper', positionType: 'OPTIONS' },
+      'Blaze': { name: 'Blaze (V1)', subtitle: 'Paper', positionType: 'OPTIONS' },
       'BlazeV2': { name: 'Blaze (V2)', subtitle: 'Paper', positionType: 'OPTIONS' }
     };
     return displays[strategy] || { name: strategy, subtitle: '', positionType: '' };

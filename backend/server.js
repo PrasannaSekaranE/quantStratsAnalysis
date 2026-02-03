@@ -344,28 +344,31 @@ async function loadTradesFromGitHub() {
             // Filter 2: time < 14:00
             let hour = 0;
             const timeStr = trade.entry_time;
-            if (timeStr.includes(':')) {
+
+            if (timeStr.includes(' ')) {
+              // Format: "2026-02-03 09:17:03.973408"
+              const timePart = timeStr.split(' ')[1];
+              hour = parseInt(timePart.split(':')[0]);
+            } else if (timeStr.includes(':')) {
               const parts = timeStr.split(':');
               if (parts.length >= 3) {
                 // HH:MM:SS
                 hour = parseInt(parts[0]);
-              } else if (parts.length === 2 && timeStr.includes(' ')) {
-                // "YYYY-MM-DD HH:MM..."
-                const timePart = timeStr.split(' ')[1];
-                hour = parseInt(timePart.split(':')[0]);
               } else if (parts.length === 2) {
-                // MM:SS - Assume morning if MM is small, but this is risky
-                // For BLAZE_20260203_153008.csv, it seems to be MM:SS.ms
-                // Since the user asked to filter < 14:00, and this file is from 15:30,
-                // we'll try to guess if it's before 2PM.
-                // If it's MM:SS, we don't know the hour.
-                // However, looking at the logs, it seems these trades are between 9AM and 11AM.
-                // If the hour is unknown, we'll allow it if it's clearly before 14:00 (e.g. MM:SS is always < 14 if MM < 14?)
-                // Actually, if it's MM:SS, we can't be sure about the hour.
-                // But let's assume if it doesn't have an hour, and it's Blaze, it's likely morning.
-                hour = 9; // Default starting hour for morning session
+                // MM:SS or HH:MM
+                // For BlazeMM:SS.ms, we'll try to guess. 
+                // However, the user said filter < 14:00.
+                // If it's 16:10, it's actually 4:10 PM if it's HH:MM.
+                // But if it's MM:SS, we don't know. 
+                // Let's assume HH:MM if it's the first part of a time string.
+                hour = parseInt(parts[0]);
               }
+            } else if (timeStr.includes('T')) {
+              // ISO Format
+              hour = new Date(timeStr).getHours();
             }
+
+            if (isNaN(hour)) hour = 9; // Fallback to morning
             return hour < 14;
           });
         }
