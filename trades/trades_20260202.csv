@@ -1,0 +1,2 @@
+symbol,position_type,entry_time,exit_time,entry_price,exit_price,quantity,pnl,profit_pct,exit_reason,holding_minutes,max_profit_seen,entry_reason,oi_signal_count,trade_number
+HINDPETRO,LONG,2026-02-02T10:26:12.806528,2026-02-02T15:00:49.364523,448.65,451.15,111,277.5,0.5572272372673577,EOD_EXIT,274,0.6575281399754922,NORMAL_3RD_OI_WITH_STRONG_BULLISH,135,1
