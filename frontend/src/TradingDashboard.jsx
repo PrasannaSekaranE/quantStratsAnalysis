@@ -66,10 +66,15 @@ const TradingDashboard = () => {
     return stats[activeStrategy] || stats.ALL;
   }, [stats, activeStrategy]);
 
-  // Set default sort to entry_time ascending for Blaze strategy
+  // Set default sort: desc for all (show latest first), with optional Blaze customization
   useEffect(() => {
     if (activeStrategy === 'Blaze') {
-      setSortConfig({ key: 'entry_time', direction: 'asc' });
+      // If user specifically wants Blaze sorted ascending by entry time, we keep it
+      // but the requirement "latest at first" suggests 'desc' might be better for all.
+      // However, previous request was 'asc' for Blaze. I'll switch it to 'desc' to satisfy "latest at first".
+      setSortConfig({ key: 'entry_time', direction: 'desc' });
+    } else {
+      setSortConfig({ key: 'date', direction: 'desc' });
     }
   }, [activeStrategy]);
 
@@ -214,6 +219,14 @@ const TradingDashboard = () => {
     } catch {
       return date;
     }
+  };
+
+  const getEventLabel = (date) => {
+    const eventMap = {
+      '2026-02-03': { label: 'IND - US Trade Deal', icon: Activity, color: 'from-blue-600 to-indigo-700' },
+      '2026-02-01': { label: 'IND - Budget Day', icon: IndianRupee, color: 'from-orange-500 to-red-600' }
+    };
+    return eventMap[date] || null;
   };
 
   const formatPrice = (price) => {
@@ -614,9 +627,20 @@ const TradingDashboard = () => {
                         style={{ animation: `slideIn 0.4s ease-out ${index * 0.05}s both` }}
                       >
                         <td className="px-6 py-5">
-                          <div className="flex items-center gap-2">
-                            <Calendar size={16} className="text-gray-400" />
-                            <span className="font-semibold text-gray-700">{formatDate(trade.date)}</span>
+                          <div className="flex flex-col gap-1">
+                            <div className="flex items-center gap-2">
+                              <Calendar size={16} className="text-gray-400" />
+                              <span className="font-semibold text-gray-700">{formatDate(trade.date)}</span>
+                            </div>
+                            {getEventLabel(trade.date) && (() => {
+                              const event = getEventLabel(trade.date);
+                              return (
+                                <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold text-white bg-gradient-to-r ${event.color} shadow-sm animate-pulse`}>
+                                  <event.icon size={10} />
+                                  <span>{event.label}</span>
+                                </div>
+                              );
+                            })()}
                           </div>
                         </td>
                         <td className="px-6 py-5">
