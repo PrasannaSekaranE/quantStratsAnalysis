@@ -1,0 +1,2 @@
+entry_time,signal_type,direction,entry_strike,option_type,entry_price,exit_target,stop_loss,lot_size,quantity_lots,capital_deployed,oi_change_pct_at_entry,instrument_key,status,exit_time,exit_price,pnl_per_lot,total_pnl,pnl_pct,holding_minutes,exit_reason
+2026-01-07 09:31:49.925190,BEARISH,BUY_PUT,26150.0,PE,103.8,123.8,62.279999999999994,75,12,93420.0,-0.6085662950870346,NSE_FO|46192,CLOSED,2026-01-07 15:00:44.462621,93.95,-9.849999999999994,-8864.999999999995,-9.489402697495178,328,EOD
