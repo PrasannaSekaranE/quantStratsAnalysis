@@ -1,3 +1,0 @@
-entry_time,signal_type,direction,entry_strike,option_type,entry_price,exit_target,stop_loss,lot_size,quantity_lots,capital_deployed,oi_change_pct_at_entry,instrument_key,status,exit_time,exit_price,pnl_per_lot,total_pnl,pnl_pct,holding_minutes,exit_reason,type
-2026-02-02 09:19:41.795055,BEARISH,BUY_PUT,25700.0,PE,908.2,928.2,726.5600000000001,75,1,68115.0,-0.4928883255879453,NSE_FO|49834,CLOSED,2026-02-02 10:56:14.380134,930.0,21.799999999999955,1634.9999999999966,2.400352345298387,96,TARGET_HIT,version_3
-2026-02-02 10:56:14.383539,BEARISH,BUY_PUT,25800.0,PE,1031.05,1051.05,824.84,75,1,77328.75,-3.8634417808219177,NSE_FO|49839,CLOSED,2026-02-02 11:02:16.879346,1075.25,44.200000000000045,3315.0000000000036,4.286892003297614,6,TARGET_HIT,version_3
