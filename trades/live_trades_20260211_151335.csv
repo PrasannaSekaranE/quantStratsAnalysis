@@ -1,0 +1,2 @@
+entry_time,signal_type,direction,atm_strike,entry_strike,option_type,atm_price,entry_price,exit_target,stop_loss,lot_size,quantity_lots,capital_deployed,oi_change_pct_at_atm,instrument_key,status,exit_time,exit_price,pnl_per_lot,total_pnl,pnl_pct,holding_minutes,exit_reason,type
+2026-02-11 13:02:06.757063,BULLISH,BUY_CALL,25900,25700,CE,146.55,290.05,310.05,188.53250000000003,65,5,94266.25,-2.0619650273759107,NSE_FO|48224,CLOSED,2026-02-11 13:30:19.952220,312.15,22.099999999999966,7182.499999999989,7.619375969660391,28,TARGET_HIT,version_2

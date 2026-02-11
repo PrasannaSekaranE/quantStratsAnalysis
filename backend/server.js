@@ -143,7 +143,16 @@ const CSV_FILES = [
   'live_trades_20260209_155230.csv',
   'trades_20260209.csv',
   'V1_20260209_155212.csv',
-  'V1_20260209_155237.csv'
+  'V1_20260209_155237.csv',
+  'V1_20260211_151339.csv',
+  'V1_20260211_151331.csv',
+  'trades_20260211.csv',
+  'live_trades_20260211_151335.csv',
+  'confluence_trades_2026-02-11_153104.csv',
+  'BLAZE_20260211_151354.csv',
+  'BLAZE_20260211_151349.csv',
+  'trades_20260210.csv',
+  'confluence_trades_2026-02-10_153100.csv'
 
 ];
 
