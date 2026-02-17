@@ -172,7 +172,9 @@ const TradingDashboard = () => {
       'GBlastV2': { name: 'G-Blast (v2)', subtitle: 'Paper', positionType: 'OPTIONS' },
       'GBlastV3': { name: 'G-Blast (v3)', subtitle: 'Paper', positionType: 'OPTIONS' },
       'Blaze': { name: 'Blaze (V1)', subtitle: 'Paper', positionType: 'OPTIONS' },
-      'BlazeV2': { name: 'Blaze (V2)', subtitle: 'Paper', positionType: 'OPTIONS' }
+      'BlazeV2': { name: 'Blaze (V2)', subtitle: 'Paper', positionType: 'OPTIONS' },
+      'BlazeV3': { name: 'Blaze (V3)', subtitle: 'Paper', positionType: 'OPTIONS' },
+      'BlazeV4': { name: 'Blaze (V4)', subtitle: 'Paper', positionType: 'OPTIONS' }
     };
     return displays[strategy] || { name: strategy, subtitle: '', positionType: '' };
   };
@@ -389,7 +391,7 @@ const TradingDashboard = () => {
 
       {/* Strategy Tabs - Updated Format */}
       <div className="flex gap-3 mb-8 flex-wrap">
-        {['ALL', 'iTrack', 'TrendFlo', 'GBlast', 'GBlastV2', 'GBlastV3', 'Blaze', 'BlazeV2'].map((strategy) => {
+        {['ALL', 'iTrack', 'TrendFlo', 'GBlast', 'GBlastV2', 'GBlastV3', 'Blaze', 'BlazeV2', 'BlazeV3', 'BlazeV4'].map((strategy) => {
           const display = strategy !== 'ALL' ? getStrategyDisplay(strategy) : null;
           return (
             <button
@@ -916,7 +918,7 @@ const TradingDashboard = () => {
                 </div>
                 <div>
                   <div className="flex justify-between mb-2">
-                    <span className="font-semibold text-gray-700">Blaze (Paper)</span>
+                    <span className="font-semibold text-gray-700">Blaze (V1) (Paper)</span>
                     <span className="font-bold" style={{ color: '#1762C7' }}>{stats.Blaze?.totalTrades || 0} trades</span>
                   </div>
                   <div className="h-4 bg-gray-200 rounded-full overflow-hidden">
@@ -930,6 +932,60 @@ const TradingDashboard = () => {
                   </div>
                   <p className={`text-sm mt-2 font-semibold ${(stats.Blaze?.totalPnL || 0) >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
                     P&L: {formatPnL(stats.Blaze?.totalPnL || 0)}
+                  </p>
+                </div>
+                <div>
+                  <div className="flex justify-between mb-2">
+                    <span className="font-semibold text-gray-700">Blaze (V2) (Paper)</span>
+                    <span className="font-bold" style={{ color: '#1762C7' }}>{stats.BlazeV2?.totalTrades || 0} trades</span>
+                  </div>
+                  <div className="h-4 bg-gray-200 rounded-full overflow-hidden">
+                    <div
+                      className="h-full"
+                      style={{
+                        width: `${((stats.BlazeV2?.totalTrades || 0) / stats.ALL.totalTrades) * 100}%`,
+                        background: 'linear-gradient(135deg, rgb(31, 168, 166) 0%, rgb(23, 98, 199) 100%)'
+                      }}
+                    />
+                  </div>
+                  <p className={`text-sm mt-2 font-semibold ${(stats.BlazeV2?.totalPnL || 0) >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                    P&L: {formatPnL(stats.BlazeV2?.totalPnL || 0)}
+                  </p>
+                </div>
+                <div>
+                  <div className="flex justify-between mb-2">
+                    <span className="font-semibold text-gray-700">Blaze (V3) (Paper)</span>
+                    <span className="font-bold" style={{ color: '#1762C7' }}>{stats.BlazeV3?.totalTrades || 0} trades</span>
+                  </div>
+                  <div className="h-4 bg-gray-200 rounded-full overflow-hidden">
+                    <div
+                      className="h-full"
+                      style={{
+                        width: `${((stats.BlazeV3?.totalTrades || 0) / stats.ALL.totalTrades) * 100}%`,
+                        background: 'linear-gradient(135deg, rgb(31, 168, 166) 0%, rgb(23, 98, 199) 100%)'
+                      }}
+                    />
+                  </div>
+                  <p className={`text-sm mt-2 font-semibold ${(stats.BlazeV3?.totalPnL || 0) >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                    P&L: {formatPnL(stats.BlazeV3?.totalPnL || 0)}
+                  </p>
+                </div>
+                <div>
+                  <div className="flex justify-between mb-2">
+                    <span className="font-semibold text-gray-700">Blaze (V4) (Paper)</span>
+                    <span className="font-bold" style={{ color: '#1762C7' }}>{stats.BlazeV4?.totalTrades || 0} trades</span>
+                  </div>
+                  <div className="h-4 bg-gray-200 rounded-full overflow-hidden">
+                    <div
+                      className="h-full"
+                      style={{
+                        width: `${((stats.BlazeV4?.totalTrades || 0) / stats.ALL.totalTrades) * 100}%`,
+                        background: 'linear-gradient(135deg, rgb(31, 168, 166) 0%, rgb(23, 98, 199) 100%)'
+                      }}
+                    />
+                  </div>
+                  <p className={`text-sm mt-2 font-semibold ${(stats.BlazeV4?.totalPnL || 0) >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                    P&L: {formatPnL(stats.BlazeV4?.totalPnL || 0)}
                   </p>
                 </div>
               </div>

@@ -173,7 +173,18 @@ const CSV_FILES = [
   'live_trades_20260216_093130.csv',
   'trades_20260216.csv',
   'V1_20260216_151613.csv',
-  'V1_20260216_151622.csv'
+  'V1_20260216_151622.csv',
+  'BLAZE_SENSEX_20260217_154336.csv',
+  'BLAZE_SENSEX_20260216_152807.csv',
+  'BLAZE_SENSEX_20260210_153532.csv',
+  'BLAZE_20260209_085934.csv',
+  'BLAZE_20260209_155318.csv',
+  'BLAZE_20260211_091839.csv',
+  'BLAZE_20260211_151358.csv',
+  'BLAZE_20260212_154929.csv',
+  'BLAZE_20260213_163442.csv',
+  'BLAZE_20260216_153215.csv',
+  'BLAZE_20260217_154458.csv'
 
 ];
 
@@ -287,13 +298,21 @@ function normalizeTrade(row, filename) {
     const type = row.type || row.Type || row.TYPE || '';
     if (type === 'v2') {
       strategy = 'BlazeV2';
+    } else if (type === 'v3') {
+      strategy = 'BlazeV3';
+    } else if (type === 'v4') {
+      strategy = 'BlazeV4';
     } else {
       strategy = 'Blaze';
     }
+
+    // Handle both nifty_signal and sensex_signal
     const niftySignal = (row.nifty_signal || row.Nifty_Signal || row.NIFTY_SIGNAL || '').toUpperCase();
-    if (niftySignal === 'BULLISH') {
+    const sensexSignal = (row.sensex_signal || row.Sensex_Signal || row.SENSEX_SIGNAL || '').toUpperCase();
+
+    if (niftySignal === 'BULLISH' || sensexSignal === 'BULLISH') {
       positionType = 'LONG';
-    } else if (niftySignal === 'BEARISH') {
+    } else if (niftySignal === 'BEARISH' || sensexSignal === 'BEARISH') {
       positionType = 'SHORT';
     }
   } else if (isGBlast) {
@@ -384,14 +403,14 @@ async function loadTradesFromGitHub() {
           trade.symbol && trade.position_type && trade.date
         );
 
-        // Specific filtering for Feb 3rd Blaze files
-        if (filename === 'BLAZE_20260203_153008.csv' || filename === 'BLAZE_20260203_153018.csv') {
-          console.log(`Applying filters to ${filename}...`);
-          validTrades = validTrades.filter(trade => {
-            // Filter 1: holding_minutes <= 9
-            if (trade.holding_minutes > 9) return false;
+        // Apply 2:00 PM filter to ALL Blaze trades (v1, v2, v3, v4)
+        const isBlaze = filename.toLowerCase().startsWith('blaze_');
+        if (isBlaze) {
+          const beforeFilterCount = validTrades.length;
+          const beforeFilterPnL = validTrades.reduce((sum, t) => sum + t.net_pnl, 0);
 
-            // Filter 2: time < 14:00
+          validTrades = validTrades.filter(trade => {
+            // Filter: time < 14:00 (before 2:00 PM)
             let hour = 0;
             const timeStr = trade.entry_time;
 
@@ -419,6 +438,15 @@ async function loadTradesFromGitHub() {
             if (isNaN(hour)) hour = 9; // Fallback to morning
             return hour < 14;
           });
+
+          const afterFilterCount = validTrades.length;
+          const afterFilterPnL = validTrades.reduce((sum, t) => sum + t.net_pnl, 0);
+          const filteredOutCount = beforeFilterCount - afterFilterCount;
+
+          console.log(`📊 Blaze Filter Applied to ${filename}:`);
+          console.log(`   ✓ Before Filter: ${beforeFilterCount} trades, PnL: ₹${beforeFilterPnL.toFixed(2)}`);
+          console.log(`   ✓ After Filter (< 2:00 PM): ${afterFilterCount} trades, PnL: ₹${afterFilterPnL.toFixed(2)}`);
+          console.log(`   ✗ Filtered Out: ${filteredOutCount} trades`);
         }
 
         allTrades.push(...validTrades);
@@ -503,7 +531,9 @@ app.get('/api/trades', async (req, res) => {
       GBlastV2: calculateStats(trades.filter(t => t.strategy === 'GBlastV2')),
       GBlastV3: calculateStats(trades.filter(t => t.strategy === 'GBlastV3')),
       Blaze: calculateStats(trades.filter(t => t.strategy === 'Blaze')),
-      BlazeV2: calculateStats(trades.filter(t => t.strategy === 'BlazeV2'))
+      BlazeV2: calculateStats(trades.filter(t => t.strategy === 'BlazeV2')),
+      BlazeV3: calculateStats(trades.filter(t => t.strategy === 'BlazeV3')),
+      BlazeV4: calculateStats(trades.filter(t => t.strategy === 'BlazeV4'))
     };
 
     res.json({
