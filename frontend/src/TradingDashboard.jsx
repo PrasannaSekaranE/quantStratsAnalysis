@@ -62,9 +62,59 @@ const TradingDashboard = () => {
   }, [tradesData, activeStrategy, selectedDate]);
 
   const currentStats = useMemo(() => {
+    // If date is selected, calculate stats from filtered trades
+    // Otherwise, use pre-calculated stats from backend
+    if (selectedDate !== 'ALL') {
+      console.log(`📊 Calculating stats for selected date: ${selectedDate}`);
+      // Calculate stats dynamically from filtered trades
+      const trades = filteredTrades;
+      if (trades.length === 0) {
+        return {
+          totalTrades: 0,
+          totalPnL: 0,
+          winners: 0,
+          losers: 0,
+          breakeven: 0,
+          winRate: 0,
+          avgProfit: 0,
+          avgLoss: 0,
+          avgPnLPerTrade: 0
+        };
+      }
+
+      const totalPnL = trades.reduce((sum, t) => sum + t.net_pnl, 0);
+      const winners = trades.filter(t => t.net_pnl > 0);
+      const losers = trades.filter(t => t.net_pnl < 0);
+      const breakeven = trades.filter(t => t.net_pnl === 0);
+      const winRate = (winners.length / trades.length) * 100;
+      const avgProfit = winners.length > 0 ? winners.reduce((sum, t) => sum + t.net_pnl, 0) / winners.length : 0;
+      const avgLoss = losers.length > 0 ? losers.reduce((sum, t) => sum + t.net_pnl, 0) / losers.length : 0;
+      const avgPnLPerTrade = totalPnL / trades.length;
+
+      const calculatedStats = {
+        totalTrades: trades.length,
+        totalPnL,
+        winners: winners.length,
+        losers: losers.length,
+        breakeven: breakeven.length,
+        winRate,
+        avgProfit,
+        avgLoss,
+        avgPnLPerTrade
+      };
+
+      console.log(`   ✓ Total Trades: ${calculatedStats.totalTrades}`);
+      console.log(`   ✓ Net PnL: ₹${calculatedStats.totalPnL.toFixed(2)}`);
+      console.log(`   ✓ Win Rate: ${calculatedStats.winRate.toFixed(2)}%`);
+      console.log(`   ✓ Avg Win: ₹${calculatedStats.avgProfit.toFixed(2)}, Avg Loss: ₹${calculatedStats.avgLoss.toFixed(2)}`);
+
+      return calculatedStats;
+    }
+
+    // No date filter - use pre-calculated stats
     if (!stats) return null;
     return stats[activeStrategy] || stats.ALL;
-  }, [stats, activeStrategy]);
+  }, [stats, activeStrategy, selectedDate, filteredTrades]);
 
   // Set default sort: desc for all (show latest first), with optional Blaze customization
   useEffect(() => {
@@ -423,6 +473,22 @@ const TradingDashboard = () => {
 
       {/* Statistics Cards */}
       {currentStats && (
+        <div>
+          {selectedDate !== 'ALL' && (
+            <div className="mb-4 px-6 py-3 rounded-xl flex items-center gap-3" style={{ background: 'linear-gradient(135deg, rgba(31, 168, 166, 0.1) 0%, rgba(23, 98, 199, 0.1) 100%)', border: '2px solid rgba(23, 98, 199, 0.3)' }}>
+              <Calendar size={20} style={{ color: '#1762C7' }} />
+              <span className="font-semibold" style={{ color: '#1762C7' }}>
+                Statistics filtered for: {formatDate(selectedDate)}
+              </span>
+              <button
+                onClick={() => setSelectedDate('ALL')}
+                className="ml-auto px-3 py-1 rounded-lg text-white font-semibold text-sm transition-all transform hover:scale-105"
+                style={{ background: 'linear-gradient(135deg, rgb(31, 168, 166) 0%, rgb(23, 98, 199) 100%)' }}
+              >
+                Show Overall Stats
+              </button>
+            </div>
+          )}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
             <div className="flex items-center justify-between mb-4">
@@ -498,6 +564,7 @@ const TradingDashboard = () => {
               </div>
             </div>
           </div>
+        </div>
         </div>
       )}
 
