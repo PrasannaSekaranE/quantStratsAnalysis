@@ -543,7 +543,10 @@ async function loadTradesFromGitHub() {
           const beforeFilterPnL = validTrades.reduce((sum, t) => sum + t.net_pnl, 0);
 
           validTrades = validTrades.filter(trade => {
-            // Filter: time < 14:00 (before 2:00 PM)
+            // EXEMPT BlazeV4 (log trades) from the 2:00 PM filter
+            if (trade.strategy === 'BlazeV4') return true;
+
+            // Filter: time < 14:00 (before 2:00 PM) for other versions (V1-V3)
             let hour = 0;
             const timeStr = trade.entry_time;
 
