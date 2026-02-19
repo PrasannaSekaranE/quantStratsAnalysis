@@ -412,14 +412,47 @@ function normalizeTrade(row, filename) {
  * Parse Blaze V4 trades from log files
  */
 async function parseBlazeLog(filename) {
+  let content = '';
   const localPath = path.join(__dirname, '..', 'trades', filename);
-  if (!fs.existsSync(localPath)) {
-    console.log(`✗ Log file not found: ${filename}`);
+
+  // Try local file first (for development)
+  if (fs.existsSync(localPath)) {
+    try {
+      content = fs.readFileSync(localPath, 'utf8');
+      console.log(`✓ Loaded log ${filename} from local`);
+    } catch (error) {
+      console.error(`✗ Error reading local log ${filename}:`, error);
+    }
+  }
+
+  // Fall back to GitHub if content is still empty
+  if (!content) {
+    try {
+      const url = `https://raw.githubusercontent.com/${GITHUB_USERNAME}/${GITHUB_REPO}/${GITHUB_BRANCH}/trades/${filename}`;
+      const fetchResponse = await new Promise((resolve, reject) => {
+        https.get(url, (response) => {
+          if (response.statusCode !== 200) {
+            reject(new Error(`Failed to fetch log ${filename} from GitHub: ${response.statusCode}`));
+            return;
+          }
+          let data = '';
+          response.on('data', chunk => data += chunk);
+          response.on('end', () => resolve(data));
+        }).on('error', reject);
+      });
+      content = fetchResponse;
+      console.log(`✓ Loaded log ${filename} from GitHub`);
+    } catch (error) {
+      console.error(`✗ Error fetching log ${filename} from GitHub:`, error.message);
+      return { filename, trades: [] };
+    }
+  }
+
+  if (!content) {
     return { filename, trades: [] };
   }
 
   try {
-    const content = fs.readFileSync(localPath, 'utf8');
     const lines = content.split('\n');
     const trades = [];
     let currentTrade = null;
@@ -492,7 +525,7 @@ async function parseBlazeLog(filename) {
           }
 
           // Exit details are usually the last part of a trade block
-          if (currentTrade.symbol && currentTrade.entry_price && currentTrade.exit_price) {
+          if (currentTrade.symbol && currentTrade.entry_price && currentTrade.exit_price !== undefined) {
             trades.push(currentTrade);
             currentTrade = null;
           }
@@ -500,10 +533,10 @@ async function parseBlazeLog(filename) {
       }
     }
 
-    console.log(`✓ Parsed ${trades.length} BlazeV4 trades from log: ${filename}`);
+    console.log(`✓ Parsed ${trades.length} BlazeV4 trades from ${filename}`);
     return { filename, trades };
   } catch (error) {
-    console.error(`✗ Error parsing log ${filename}:`, error);
+    console.error(`✗ Error parsing content from ${filename}:`, error);
     return { filename, trades: [] };
   }
 }
