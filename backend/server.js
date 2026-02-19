@@ -199,7 +199,15 @@ const CSV_FILES = [
   'BLAZE_20260218_153459.csv',
   'BLAZE_20260218_152039.csv',
   'BLAZE_20260218_152032.csv',
-  'confluence_trades_2026-02-18_153104.csv'
+  'confluence_trades_2026-02-18_153104.csv',
+  'V1_20260219_155630.csv',
+  'V1_20260219_155622.csv',
+  'trades_20260219.csv',
+  'live_trades_20260219_155627.csv',
+  'BLAZE_20260219_155652.csv',
+  'BLAZE_20260219_155648.csv',
+  'BLAZE_20260219_155642.csv',
+  'blaze_sensex_voting_20260219.log'
 ];
 
 const fs = require('fs');
@@ -228,6 +236,11 @@ async function fetchCSVFromGitHub(filename) {
           reject(error);
         });
     });
+  }
+
+  // Handle log files differently
+  if (filename.endsWith('.log')) {
+    return parseBlazeLog(filename);
   }
 
   // Fall back to GitHub
@@ -396,6 +409,106 @@ function normalizeTrade(row, filename) {
 }
 
 /**
+ * Parse Blaze V4 trades from log files
+ */
+async function parseBlazeLog(filename) {
+  const localPath = path.join(__dirname, '..', 'trades', filename);
+  if (!fs.existsSync(localPath)) {
+    console.log(`✗ Log file not found: ${filename}`);
+    return { filename, trades: [] };
+  }
+
+  try {
+    const content = fs.readFileSync(localPath, 'utf8');
+    const lines = content.split('\n');
+    const trades = [];
+    let currentTrade = null;
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+
+      // Detect Trade Entry
+      if (line.includes('[TRADE ENTRY] BLAZE TRADE ENTERED')) {
+        currentTrade = {
+          strategy: 'BlazeV4',
+          source_file: filename,
+          status: 'CLOSED' // Assume closed if we find an exit later
+        };
+        // The timestamp is at the beginning of the line
+        const timestampMatch = line.match(/^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})/);
+        if (timestampMatch) {
+          currentTrade.entry_time = timestampMatch[1];
+          currentTrade.date = timestampMatch[1].split(' ')[0];
+        }
+        continue;
+      }
+
+      if (currentTrade) {
+        // Parse Entry Details
+        if (line.includes('SENSEX Signal:')) {
+          const signalMatch = line.match(/SENSEX Signal: (\w+)/);
+          if (signalMatch) {
+            currentTrade.position_type = signalMatch[1] === 'BULLISH' ? 'LONG' : 'SHORT';
+          }
+        } else if (line.includes('SENSEX Entry:')) {
+          const entryMatch = line.match(/SENSEX Entry: (.*?) @ Rs\.(.*)/);
+          if (entryMatch) {
+            currentTrade.symbol = `SENSEX ${entryMatch[1]}`;
+            currentTrade.entry_price = parseFloat(entryMatch[2].replace(/,/g, ''));
+          }
+        } else if (line.includes('Quantity:')) {
+          const qtyMatch = line.match(/Quantity: (\d+)/);
+          if (qtyMatch) {
+            currentTrade.quantity = parseInt(qtyMatch[1]);
+          }
+        }
+
+        // Detect Trade Exit (Search ahead for performance or just process sequentially)
+        // For simplicity and since logs are small enough, process sequentially
+        if (line.includes('[TRADE EXIT] TRADE CLOSED')) {
+          const timestampMatch = line.match(/^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})/);
+          if (timestampMatch) {
+            currentTrade.exit_time = timestampMatch[1];
+          }
+          const reasonMatch = line.match(/TRADE CLOSED - (\w+)/);
+          if (reasonMatch) {
+            currentTrade.exit_reason = reasonMatch[1];
+          }
+        } else if (line.includes('Entry: Rs.') && line.includes('-> Exit: Rs.')) {
+          const priceMatch = line.match(/Entry: Rs\.(.*?) -> Exit: Rs\.(.*)/);
+          if (priceMatch) {
+            currentTrade.exit_price = parseFloat(priceMatch[2].replace(/,/g, ''));
+          }
+        } else if (line.includes('P&L: Rs.')) {
+          const pnlMatch = line.match(/P&L: Rs\.(.*?) \((.*?)\%\)/);
+          if (pnlMatch) {
+            currentTrade.net_pnl = parseFloat(pnlMatch[1].replace(/,/g, ''));
+            currentTrade.profit_pct = parseFloat(pnlMatch[2]);
+          }
+        } else if (line.includes('Holding:')) {
+          const holdingMatch = line.match(/Holding: (\d+)/);
+          if (holdingMatch) {
+            currentTrade.holding_minutes = parseInt(holdingMatch[1]);
+          }
+
+          // Exit details are usually the last part of a trade block
+          if (currentTrade.symbol && currentTrade.entry_price && currentTrade.exit_price) {
+            trades.push(currentTrade);
+            currentTrade = null;
+          }
+        }
+      }
+    }
+
+    console.log(`✓ Parsed ${trades.length} BlazeV4 trades from log: ${filename}`);
+    return { filename, trades };
+  } catch (error) {
+    console.error(`✗ Error parsing log ${filename}:`, error);
+    return { filename, trades: [] };
+  }
+}
+
+/**
  * Load trades from GitHub
  */
 async function loadTradesFromGitHub() {
@@ -412,10 +525,16 @@ async function loadTradesFromGitHub() {
         const { filename, trades } = result.value;
         console.log(`✓ Loaded ${trades.length} trades from ${filename}`);
 
-        const normalizedTrades = trades.map(row => normalizeTrade(row, filename));
-        let validTrades = normalizedTrades.filter(trade =>
-          trade.symbol && trade.position_type && trade.date
-        );
+        let validTrades = [];
+        if (filename.endsWith('.log')) {
+          // Log trades are already normalized by parseBlazeLog
+          validTrades = trades;
+        } else {
+          const normalizedTrades = trades.map(row => normalizeTrade(row, filename));
+          validTrades = normalizedTrades.filter(trade =>
+            trade.symbol && trade.position_type && trade.date
+          );
+        }
 
         // Apply 2:00 PM filter to ALL Blaze trades (v1, v2, v3, v4)
         const isBlaze = filename.toLowerCase().startsWith('blaze_');
