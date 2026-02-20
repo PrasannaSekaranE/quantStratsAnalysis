@@ -27,188 +27,55 @@ const GITHUB_USERNAME = 'PrasannaSekaranE';  // ← Change this!
 const GITHUB_REPO = 'quantStratsAnalysis';
 const GITHUB_BRANCH = 'main';
 
-// List of CSV files to fetch from GitHub
-// Add all your CSV filenames here
-const CSV_FILES = [
-  'confluence_trades_2025-12-04_153100.csv',
-  'confluence_trades_2025-12-09_153104.csv',
-  'confluence_trades_2025-12-15_153101.csv',
-  'confluence_trades_2025-12-17_153104.csv',
-  'confluence_trades_2025-12-18_153102.csv',
-  'confluence_trades_2025-12-19_153103.csv',
-  'confluence_trades_2025-12-23_150626.csv',
-  'confluence_trades_2025-12-24_153104.csv',
-  'confluence_trades_2025-12-26_153101.csv',
-  'confluence_trades_2025-12-29_153101.csv',
-  'confluence_trades_2025-12-30_153100.csv',
-  'confluence_trades_2026-01-02_153100.csv',
-  'live_trades_20260108_120558.csv',
-  'trades_20260108.csv',
-  'trades_20260109.csv',
-  'live_trades_20260109_115838.csv',
-  'live_trades_20260112_094418.csv',
-  'confluence_trades_2026-01-12_153101.csv',
-  'trades_20260112.csv',
-  'confluence_trades_2026-01-09_153101.csv',
-  'confluence_trades_2026-01-08_153103.csv',
-  'trades_20260102.csv',
-  'live_trades_20251231_152554.csv',
-  'live_trades_20260102_115833.csv',
-  'live_trades_20260105_102034.csv',
-  'trades_20260105.csv',
-  'confluence_trades_2026-01-05_153102.csv',
-  'live_trades_20260106_093737.csv',
-  'confluence_trades_2026-01-06_153104.csv',
-  'confluence_trades_2026-01-07_153101.csv',
-  'live_trades_20260107_150815.csv',
-  'v1_14 (1).csv',
-  'v2_14 (1).csv',
-  'trades_20260114.csv',
-  'confluence_trades_2026-01-14_153105.csv',
-  'live_trades_20260122_100406.csv',
-  'live_trades_20260122_100401.csv',
-  'confluence_trades_2026-01-22_153105.csv',
-  'trades_20260122.csv',
-  'live_trades_20260114_160500..csv',
-  'live_trades_20260114_160459.csv',
-  'live_trades_20260113_094418.csv',
-  'live_trades_20260113_094018.csv',
-  'live_trades_20260119_090500.csv',
-  'live_trades_20260119_100500.csv',
-  'trades_20260120.csv',
-  'trades_20260119.csv',
-  'confluence_trades_2026-01-20_153103.csv',
-  'confluence_trades_2026-01-19_153102.csv',
-  'live_trades_20260120_100500.csv',
-  'live_trades_20260120_100400.csv',
-  'live_trades_20260121_100500.csv',
-  'trades_20260107.csv',
-  'live_trades_20260129_095654.csv',
-  'V3_20260129_095629.csv',
-  'V1_20260129_095619.csv',
-  'trades_20260106.csv',
-  'trades_20251223.csv',
-  'trades_20251224.csv',
-  'trades_20251226.csv',
-  'trades_20251229.csv',
-  'trades_20251230.csv',
-  'trades_20251231.csv',
-  'live_trades_20260112_160459.csv',
-  'live_trades_20260127_155504.csv',
-  'confluence_trades_2026-01-28_153100.csv',
-  'trades_20260128.csv',
-  'live_trades_20260123_101431.csv',
-  'V3_20260123_101337.csv',
-  'V3_20260127_155500.csv',
-  'V1_20260127_155455.csv',
-  'V1_20260123_101921.csv',
-  'confluence_trades_2026-01-29_153102.csv',
-  'trades_20260129.csv',
-  'BLAZE_20260129_151440.csv',
-  'V3_20260130_153630.csv',
-  'V1_20260130_153623.csv',
-  'trades_20260130.csv',
-  'live_trades_20260130_153627.csv',
-  'confluence_trades_2026-01-30_153101.csv',
-  'BLAZE_20260130_153541.csv',
-  'BLAZE_20260201_153122.csv',
-  'live_trades_20260201_153039.csv',
-  'V3_20260201_153045.csv',
-  'V1_20260201_153032.csv',
-  'V1_20260202_154323.csv',
-  'V1_20260202_154313.csv',
-  'trades_20260202.csv',
-  'confluence_trades_2026-02-02_153101.csv',
-  'BLAZE_20260202_153211.csv',
-  'V1_20260203_111931.csv',
-  'V1_20260203_111923.csv',
-  'live_trades_20260203_111927.csv',
-  'BLAZE_20260203_153018.csv',
-  'BLAZE_20260203_153008.csv',
-  'trades_20260204.csv',
-  'live_trades_20260204_155140.csv',
-  'confluence_trades_2026-02-04_153102.csv',
-  'confluence_trades_2026-02-03_153104.csv',
-  'BLAZE_20260204_155115.csv',
-  'BLAZE_20260204_155108.csv',
-  'V1_20260204_155143.csv',
-  'V1_20260204_155136.csv',
-  'confluence_trades_2026-02-05_153100.csv',
-  'V1_20260205_155301.csv',
-  'V1_20260205_155253.csv',
-  'live_trades_20260205_155257.csv',
-  'BLAZE_20260209_155251.csv',
-  'BLAZE_20260209_155309.csv',
-  'confluence_trades_2026-02-09_094955.csv',
-  'live_trades_20260209_155230.csv',
-  'trades_20260209.csv',
-  'V1_20260209_155212.csv',
-  'V1_20260209_155237.csv',
-  'V1_20260211_151339.csv',
-  'V1_20260211_151331.csv',
-  'trades_20260211.csv',
-  'live_trades_20260211_151335.csv',
-  'confluence_trades_2026-02-11_153104.csv',
-  'BLAZE_20260211_151354.csv',
-  'BLAZE_20260211_151349.csv',
-  'trades_20260210.csv',
-  'confluence_trades_2026-02-10_153100.csv',
-  'V1_20260212_154903.csv',
-  'V1_20260212_154854.csv',
-  'trades_20260212.csv',
-  'live_trades_20260212_154901.csv',
-  'confluence_trades_2026-02-12_153104.csv',
-  'BLAZE_20260212_154925.csv',
-  'BLAZE_20260212_154918.csv',
-  'V1_20260213_163503.csv',
-  'V1_20260213_163454.csv',
-  'trades_20260213.csv',
-  'live_trades_20260213_163500.csv',
-  'confluence_trades_2026-02-13_153102.csv',
-  'BLAZE_20260213_163439.csv',
-  'BLAZE_20260213_163432.csv',
-  'confluence_trades_2026-02-16_153101.csv',
-  'BLAZE_20260216_153208.csv',
-  'BLAZE_20260216_153212.csv',
-  'live_trades_20260216_093130.csv',
-  'trades_20260216.csv',
-  'V1_20260216_151613.csv',
-  'V1_20260216_151622.csv',
-  'BLAZE_SENSEX_20260217_154336.csv',
-  'BLAZE_SENSEX_20260216_152807.csv',
-  'BLAZE_SENSEX_20260210_153532.csv',
-  'BLAZE_20260209_085934.csv',
-  'BLAZE_20260209_155318.csv',
-  'BLAZE_20260211_091839.csv',
-  'BLAZE_20260211_151358.csv',
-  'BLAZE_20260212_154929.csv',
-  'BLAZE_20260213_163442.csv',
-  'BLAZE_20260216_153215.csv',
-  'BLAZE_20260217_154458.csv',
-  'V1_20260217_154422.csv',
-  'V1_20260217_154412.csv',
-  'trades_20260217.csv',
-  'live_trades_20260217_154417.csv',
-  'BLAZE_20260217_154455.csv',
-  'BLAZE_20260217_154451.csv',
-  'V1_20260218_152013.csv',
-  'V1_20260218_152002.csv',
-  'trades_20260218.csv',
-  'live_trades_20260218_152006.csv',
-  'BLAZE_SENSEX_20260218_153629.csv',
-  'BLAZE_20260218_153459.csv',
-  'BLAZE_20260218_152039.csv',
-  'BLAZE_20260218_152032.csv',
-  'confluence_trades_2026-02-18_153104.csv',
-  'V1_20260219_155630.csv',
-  'V1_20260219_155622.csv',
-  'trades_20260219.csv',
-  'live_trades_20260219_155627.csv',
-  'BLAZE_20260219_155652.csv',
-  'BLAZE_20260219_155648.csv',
-  'BLAZE_20260219_155642.csv',
-  'blaze_sensex_voting_20260219.log'
-];
+/**
+ * Dynamically detect trade files in the 'trades' folder
+ * Thist handles both local development and Vercel (via GitHub API)
+ */
+async function getTradeFileList() {
+  const tradesDir = path.join(__dirname, '..', 'trades');
+
+  // Try local filesystem first
+  if (fs.existsSync(tradesDir)) {
+    try {
+      const files = fs.readdirSync(tradesDir);
+      const tradeFiles = files.filter(f => f.endsWith('.csv') || f.endsWith('.log'));
+      console.log(`✓ Detected ${tradeFiles.length} trade files locally`);
+      return tradeFiles;
+    } catch (error) {
+      console.error('✗ Error reading local trades directory:', error);
+    }
+  }
+
+  // Fallback to GitHub API (for Vercel production)
+  try {
+    const url = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/trades?ref=${GITHUB_BRANCH}`;
+    const options = {
+      headers: { 'User-Agent': 'Node.js' }
+    };
+
+    const fetchResponse = await new Promise((resolve, reject) => {
+      https.get(url, options, (response) => {
+        if (response.statusCode !== 200) {
+          reject(new Error(`GitHub API returned ${response.statusCode}`));
+          return;
+        }
+        let data = '';
+        response.on('data', chunk => data += chunk);
+        response.on('end', () => resolve(JSON.parse(data)));
+      }).on('error', reject);
+    });
+
+    const tradeFiles = fetchResponse
+      .filter(item => item.type === 'file' && (item.name.endsWith('.csv') || item.name.endsWith('.log')))
+      .map(item => item.name);
+
+    console.log(`✓ Detected ${tradeFiles.length} trade files from GitHub API`);
+    return tradeFiles;
+  } catch (error) {
+    console.error('✗ Error fetching file list from GitHub:', error.message);
+    return [];
+  }
+}
 
 const fs = require('fs');
 const path = require('path');
@@ -546,9 +413,10 @@ async function parseBlazeLog(filename) {
  */
 async function loadTradesFromGitHub() {
   try {
-    console.log('Fetching CSV files from GitHub...');
+    const csvFiles = await getTradeFileList();
+    console.log(`Fetching ${csvFiles.length} files...`);
 
-    const fetchPromises = CSV_FILES.map(file => fetchCSVFromGitHub(file));
+    const fetchPromises = csvFiles.map(file => fetchCSVFromGitHub(file));
     const results = await Promise.allSettled(fetchPromises);
 
     const allTrades = [];
