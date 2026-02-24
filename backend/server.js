@@ -28,18 +28,38 @@ const GITHUB_REPO = 'quantStratsAnalysis';
 const GITHUB_BRANCH = 'main';
 
 /**
- * Dynamically detect trade files in the 'trades' folder
- * Thist handles both local development and Vercel (via GitHub API)
+ * Dynamically detect trade files in the 'trades' folder and its subdirectories
+ * This handles both local development and Vercel (via GitHub API)
  */
 async function getTradeFileList() {
   const tradesDir = path.join(__dirname, '..', 'trades');
+  const subDirs = ['LIVE - V1', 'LIVE - V2'];
+
+  // Helper for recursive local scan
+  function scanDirLocally(dir, relativePath = '') {
+    let results = [];
+    if (!fs.existsSync(dir)) return results;
+
+    const list = fs.readdirSync(dir);
+    list.forEach(file => {
+      const fullPath = path.join(dir, file);
+      const relPath = relativePath ? `${relativePath}/${file}` : file;
+      const stat = fs.statSync(fullPath);
+
+      if (stat && stat.isDirectory()) {
+        results = results.concat(scanDirLocally(fullPath, relPath));
+      } else if (file.endsWith('.csv') || file.endsWith('.log')) {
+        results.push(relPath);
+      }
+    });
+    return results;
+  }
 
   // Try local filesystem first
   if (fs.existsSync(tradesDir)) {
     try {
-      const files = fs.readdirSync(tradesDir);
-      const tradeFiles = files.filter(f => f.endsWith('.csv') || f.endsWith('.log'));
-      console.log(`✓ Detected ${tradeFiles.length} trade files locally`);
+      const tradeFiles = scanDirLocally(tradesDir);
+      console.log(`✓ Detected ${tradeFiles.length} trade files locally (including subdirs)`);
       return tradeFiles;
     } catch (error) {
       console.error('✗ Error reading local trades directory:', error);
@@ -48,28 +68,36 @@ async function getTradeFileList() {
 
   // Fallback to GitHub API (for Vercel production)
   try {
-    const url = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/trades?ref=${GITHUB_BRANCH}`;
-    const options = {
-      headers: { 'User-Agent': 'Node.js' }
-    };
+    async function fetchGitHubDir(folderPath) {
+      const url = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/${folderPath}?ref=${GITHUB_BRANCH}`;
+      const options = { headers: { 'User-Agent': 'Node.js' } };
 
-    const fetchResponse = await new Promise((resolve, reject) => {
-      https.get(url, options, (response) => {
-        if (response.statusCode !== 200) {
-          reject(new Error(`GitHub API returned ${response.statusCode}`));
-          return;
+      const response = await new Promise((resolve, reject) => {
+        https.get(url, options, (res) => {
+          if (res.statusCode !== 200) {
+            reject(new Error(`GitHub API returned ${res.statusCode} for ${folderPath}`));
+            return;
+          }
+          let data = '';
+          res.on('data', chunk => data += chunk);
+          res.on('end', () => resolve(JSON.parse(data)));
+        }).on('error', reject);
+      });
+
+      let files = [];
+      for (const item of response) {
+        if (item.type === 'file' && (item.name.endsWith('.csv') || item.name.endsWith('.log'))) {
+          files.push(folderPath === 'trades' ? item.name : `${folderPath.replace('trades/', '')}/${item.name}`);
+        } else if (item.type === 'dir' && subDirs.includes(item.name)) {
+          const subFiles = await fetchGitHubDir(`${folderPath}/${item.name}`);
+          files = files.concat(subFiles);
         }
-        let data = '';
-        response.on('data', chunk => data += chunk);
-        response.on('end', () => resolve(JSON.parse(data)));
-      }).on('error', reject);
-    });
+      }
+      return files;
+    }
 
-    const tradeFiles = fetchResponse
-      .filter(item => item.type === 'file' && (item.name.endsWith('.csv') || item.name.endsWith('.log')))
-      .map(item => item.name);
-
-    console.log(`✓ Detected ${tradeFiles.length} trade files from GitHub API`);
+    const tradeFiles = await fetchGitHubDir('trades');
+    console.log(`✓ Detected ${tradeFiles.length} trade files from GitHub API (including subdirs)`);
     return tradeFiles;
   } catch (error) {
     console.error('✗ Error fetching file list from GitHub:', error.message);
@@ -211,7 +239,11 @@ function normalizeTrade(row, filename) {
     }
   } else if (isGBlast) {
     const tradeType = row.type || row.Type || row.TYPE || '';
-    if (tradeType === 'version_3') {
+    if (filename.includes('LIVE - V1')) {
+      strategy = filename.includes('hybrid') ? 'V1_LIVE_HYBRID' : 'V1_LIVE_KITE';
+    } else if (filename.includes('LIVE - V2')) {
+      strategy = filename.includes('hybrid') ? 'V2_LIVE_HYBRID' : 'V2_LIVE_KITE';
+    } else if (tradeType === 'version_3') {
       strategy = 'GBlastV3';
     } else if (tradeType === 'version_2') {
       strategy = 'GBlastV2';
@@ -570,7 +602,11 @@ app.get('/api/trades', async (req, res) => {
       Blaze: calculateStats(trades.filter(t => t.strategy === 'Blaze')),
       BlazeV2: calculateStats(trades.filter(t => t.strategy === 'BlazeV2')),
       BlazeV3: calculateStats(trades.filter(t => t.strategy === 'BlazeV3')),
-      BlazeV4: calculateStats(trades.filter(t => t.strategy === 'BlazeV4'))
+      BlazeV4: calculateStats(trades.filter(t => t.strategy === 'BlazeV4')),
+      V1_LIVE_HYBRID: calculateStats(trades.filter(t => t.strategy === 'V1_LIVE_HYBRID')),
+      V1_LIVE_KITE: calculateStats(trades.filter(t => t.strategy === 'V1_LIVE_KITE')),
+      V2_LIVE_HYBRID: calculateStats(trades.filter(t => t.strategy === 'V2_LIVE_HYBRID')),
+      V2_LIVE_KITE: calculateStats(trades.filter(t => t.strategy === 'V2_LIVE_KITE'))
     };
 
     res.json({

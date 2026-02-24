@@ -224,7 +224,11 @@ const TradingDashboard = () => {
       'Blaze': { name: 'Blaze (V1)', subtitle: 'Paper', positionType: 'OPTIONS' },
       'BlazeV2': { name: 'Blaze (V2)', subtitle: 'Paper', positionType: 'OPTIONS' },
       'BlazeV3': { name: 'Blaze (V3)', subtitle: 'Paper', positionType: 'OPTIONS' },
-      'BlazeV4': { name: 'Blaze (V4)', subtitle: 'Paper', positionType: 'OPTIONS' }
+      'BlazeV4': { name: 'Blaze (V4)', subtitle: 'Paper', positionType: 'OPTIONS' },
+      'V1_LIVE_HYBRID': { name: 'V1 Live Hybrid', subtitle: 'GBLAST LIVE', positionType: 'OPTIONS' },
+      'V1_LIVE_KITE': { name: 'V1 Live Kite', subtitle: 'GBLAST LIVE', positionType: 'OPTIONS' },
+      'V2_LIVE_HYBRID': { name: 'V2 Live Hybrid', subtitle: 'GBLAST LIVE', positionType: 'OPTIONS' },
+      'V2_LIVE_KITE': { name: 'V2 Live Kite', subtitle: 'GBLAST LIVE', positionType: 'OPTIONS' }
     };
     return displays[strategy] || { name: strategy, subtitle: '', positionType: '' };
   };
@@ -441,7 +445,7 @@ const TradingDashboard = () => {
 
       {/* Strategy Tabs - Updated Format */}
       <div className="flex gap-3 mb-8 flex-wrap">
-        {['ALL', 'iTrack', 'TrendFlo', 'GBlast', 'GBlastV2', 'GBlastV3', 'Blaze', 'BlazeV2', 'BlazeV3', 'BlazeV4'].map((strategy) => {
+        {['ALL', 'iTrack', 'TrendFlo', 'GBlast', 'GBlastV2', 'GBlastV3', 'Blaze', 'BlazeV2', 'BlazeV3', 'BlazeV4', 'V1_LIVE_HYBRID', 'V1_LIVE_KITE', 'V2_LIVE_HYBRID', 'V2_LIVE_KITE'].map((strategy) => {
           const display = strategy !== 'ALL' ? getStrategyDisplay(strategy) : null;
           return (
             <button
@@ -471,6 +475,60 @@ const TradingDashboard = () => {
         })}
       </div>
 
+      {/* GBLAST LIVE Summary Grid */}
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold mb-4 flex items-center gap-2" style={{ color: '#1762C7' }}>
+          <Activity size={24} />
+          GBLAST LIVE
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[
+            { id: 'V1_LIVE_HYBRID', label: 'V1 HYBRID' },
+            { id: 'V1_LIVE_KITE', label: 'V1 KITE' },
+            { id: 'V2_LIVE_HYBRID', label: 'V2 HYBRID' },
+            { id: 'V2_LIVE_KITE', label: 'V2 KITE' }
+          ].map(version => {
+            const versionStats = stats ? stats[version.id] : null;
+            if (!versionStats) return null;
+
+            return (
+              <div
+                key={version.id}
+                onClick={() => setActiveStrategy(version.id)}
+                className={`cursor-pointer rounded-2xl p-5 transition-all duration-300 transform hover:-translate-y-1 ${activeStrategy === version.id ? 'ring-4 ring-offset-2' : ''
+                  }`}
+                style={{
+                  background: 'white',
+                  boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)',
+                  ringColor: '#1762C7'
+                }}
+              >
+                <div className="flex justify-between items-start mb-3">
+                  <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">{version.label}</span>
+                  <div className={`p-2 rounded-lg ${versionStats.totalPnL >= 0 ? 'bg-emerald-50/50' : 'bg-red-50/50'}`}>
+                    {versionStats.totalPnL >= 0 ?
+                      <ArrowUpRight size={18} className="text-emerald-500" /> :
+                      <ArrowDownRight size={18} className="text-red-500" />
+                    }
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <div className={`text-2xl font-black ${versionStats.totalPnL >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                    {formatPnL(versionStats.totalPnL)}
+                  </div>
+                  <div className="flex items-center justify-between text-xs font-semibold">
+                    <span className="text-gray-500">{versionStats.totalTrades} Trades</span>
+                    <span className={versionStats.winRate >= 50 ? 'text-emerald-500' : 'text-orange-500'}>
+                      {versionStats.winRate.toFixed(1)}% Win
+                    </span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Statistics Cards */}
       {currentStats && (
         <div>
@@ -489,82 +547,82 @@ const TradingDashboard = () => {
               </button>
             </div>
           )}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 rounded-xl" style={{ background: 'linear-gradient(135deg, rgb(31, 168, 166) 0%, rgb(23, 98, 199) 100%)' }}>
-                <BarChart3 className="text-white" size={28} />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="bg-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 rounded-xl" style={{ background: 'linear-gradient(135deg, rgb(31, 168, 166) 0%, rgb(23, 98, 199) 100%)' }}>
+                  <BarChart3 className="text-white" size={28} />
+                </div>
+                <Activity className="text-gray-400" size={24} />
               </div>
-              <Activity className="text-gray-400" size={24} />
+              <h3 className="text-gray-500 text-sm font-semibold mb-2 uppercase tracking-wide">Total Trades</h3>
+              <p className="text-4xl font-bold mb-2" style={{ color: '#1762C7' }}>{currentStats.totalTrades}</p>
+              <div className="flex gap-3 text-xs mt-3">
+                <span className="text-emerald-600 font-semibold">✓ {currentStats.winners}</span>
+                <span className="text-red-600 font-semibold">✗ {currentStats.losers}</span>
+                <span className="text-gray-500 font-semibold">⊗ {currentStats.breakeven}</span>
+              </div>
             </div>
-            <h3 className="text-gray-500 text-sm font-semibold mb-2 uppercase tracking-wide">Total Trades</h3>
-            <p className="text-4xl font-bold mb-2" style={{ color: '#1762C7' }}>{currentStats.totalTrades}</p>
-            <div className="flex gap-3 text-xs mt-3">
-              <span className="text-emerald-600 font-semibold">✓ {currentStats.winners}</span>
-              <span className="text-red-600 font-semibold">✗ {currentStats.losers}</span>
-              <span className="text-gray-500 font-semibold">⊗ {currentStats.breakeven}</span>
-            </div>
-          </div>
 
-          <div className="bg-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
-            <div className="flex items-center justify-between mb-4">
-              <div className={`p-3 rounded-xl ${currentStats.totalPnL >= 0 ? 'bg-emerald-500' : 'bg-red-500'}`}>
-                <IndianRupee className="text-white" size={28} />
+            <div className="bg-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+              <div className="flex items-center justify-between mb-4">
+                <div className={`p-3 rounded-xl ${currentStats.totalPnL >= 0 ? 'bg-emerald-500' : 'bg-red-500'}`}>
+                  <IndianRupee className="text-white" size={28} />
+                </div>
+                {currentStats.totalPnL >= 0 ?
+                  <ArrowUpRight className="text-emerald-500" size={28} /> :
+                  <ArrowDownRight className="text-red-500" size={28} />
+                }
               </div>
-              {currentStats.totalPnL >= 0 ?
-                <ArrowUpRight className="text-emerald-500" size={28} /> :
-                <ArrowDownRight className="text-red-500" size={28} />
-              }
+              <h3 className="text-gray-500 text-sm font-semibold mb-2 uppercase tracking-wide">Net P&L</h3>
+              <p className={`text-4xl font-bold mb-2 ${currentStats.totalPnL >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                {formatPnL(currentStats.totalPnL)}
+              </p>
+              <p className="text-xs text-gray-500 mt-3">
+                Avg per trade: <span className={`font-semibold ${currentStats.avgPnLPerTrade >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                  {formatPnL(currentStats.avgPnLPerTrade)}
+                </span>
+              </p>
             </div>
-            <h3 className="text-gray-500 text-sm font-semibold mb-2 uppercase tracking-wide">Net P&L</h3>
-            <p className={`text-4xl font-bold mb-2 ${currentStats.totalPnL >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-              {formatPnL(currentStats.totalPnL)}
-            </p>
-            <p className="text-xs text-gray-500 mt-3">
-              Avg per trade: <span className={`font-semibold ${currentStats.avgPnLPerTrade >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                {formatPnL(currentStats.avgPnLPerTrade)}
-              </span>
-            </p>
-          </div>
 
-          <div className="bg-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 rounded-xl" style={{ background: 'linear-gradient(135deg, rgb(31, 168, 166) 0%, rgb(23, 98, 199) 100%)' }}>
-                <Target className="text-white" size={28} />
+            <div className="bg-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 rounded-xl" style={{ background: 'linear-gradient(135deg, rgb(31, 168, 166) 0%, rgb(23, 98, 199) 100%)' }}>
+                  <Target className="text-white" size={28} />
+                </div>
+                <div className="text-right">
+                  <div className="w-16 h-16 rounded-full border-4 flex items-center justify-center" style={{ borderColor: '#1762C7' }}>
+                    <span className="text-lg font-bold" style={{ color: '#1762C7' }}>
+                      {currentStats.winRate.toFixed(0)}%
+                    </span>
+                  </div>
+                </div>
               </div>
-              <div className="text-right">
-                <div className="w-16 h-16 rounded-full border-4 flex items-center justify-center" style={{ borderColor: '#1762C7' }}>
-                  <span className="text-lg font-bold" style={{ color: '#1762C7' }}>
-                    {currentStats.winRate.toFixed(0)}%
-                  </span>
+              <h3 className="text-gray-500 text-sm font-semibold mb-2 uppercase tracking-wide">Win Rate</h3>
+              <p className="text-4xl font-bold" style={{ color: '#1762C7' }}>
+                {currentStats.winRate.toFixed(1)}%
+              </p>
+            </div>
+
+            <div className="bg-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 rounded-xl bg-gradient-to-br from-emerald-500 to-red-500">
+                  <Activity className="text-white" size={28} />
+                </div>
+              </div>
+              <h3 className="text-gray-500 text-sm font-semibold mb-2 uppercase tracking-wide">Avg Profit/Loss</h3>
+              <div className="space-y-2">
+                <div>
+                  <p className="text-xs text-gray-500 mb-1">Avg Win</p>
+                  <p className="text-2xl font-bold text-emerald-600">{formatPnL(currentStats.avgProfit)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 mb-1">Avg Loss</p>
+                  <p className="text-2xl font-bold text-red-600">{formatPnL(currentStats.avgLoss)}</p>
                 </div>
               </div>
             </div>
-            <h3 className="text-gray-500 text-sm font-semibold mb-2 uppercase tracking-wide">Win Rate</h3>
-            <p className="text-4xl font-bold" style={{ color: '#1762C7' }}>
-              {currentStats.winRate.toFixed(1)}%
-            </p>
           </div>
-
-          <div className="bg-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 rounded-xl bg-gradient-to-br from-emerald-500 to-red-500">
-                <Activity className="text-white" size={28} />
-              </div>
-            </div>
-            <h3 className="text-gray-500 text-sm font-semibold mb-2 uppercase tracking-wide">Avg Profit/Loss</h3>
-            <div className="space-y-2">
-              <div>
-                <p className="text-xs text-gray-500 mb-1">Avg Win</p>
-                <p className="text-2xl font-bold text-emerald-600">{formatPnL(currentStats.avgProfit)}</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 mb-1">Avg Loss</p>
-                <p className="text-2xl font-bold text-red-600">{formatPnL(currentStats.avgLoss)}</p>
-              </div>
-            </div>
-          </div>
-        </div>
         </div>
       )}
 
