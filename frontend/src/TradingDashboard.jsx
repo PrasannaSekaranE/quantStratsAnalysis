@@ -50,7 +50,12 @@ const TradingDashboard = () => {
 
     // Filter by strategy
     if (activeStrategy !== 'ALL') {
-      filtered = filtered.filter(trade => trade.strategy === activeStrategy);
+      if (activeStrategy === 'GBLAST_LIVE') {
+        const liveVersions = ['V1_LIVE_HYBRID', 'V1_LIVE_KITE', 'V2_LIVE_HYBRID', 'V2_LIVE_KITE'];
+        filtered = filtered.filter(trade => liveVersions.includes(trade.strategy));
+      } else {
+        filtered = filtered.filter(trade => trade.strategy === activeStrategy);
+      }
     }
 
     // Filter by date
@@ -225,10 +230,11 @@ const TradingDashboard = () => {
       'BlazeV2': { name: 'Blaze (V2)', subtitle: 'Paper', positionType: 'OPTIONS' },
       'BlazeV3': { name: 'Blaze (V3)', subtitle: 'Paper', positionType: 'OPTIONS' },
       'BlazeV4': { name: 'Blaze (V4)', subtitle: 'Paper', positionType: 'OPTIONS' },
-      'V1_LIVE_HYBRID': { name: 'V1 Live Hybrid', subtitle: 'GBLAST LIVE', positionType: 'OPTIONS' },
-      'V1_LIVE_KITE': { name: 'V1 Live Kite', subtitle: 'GBLAST LIVE', positionType: 'OPTIONS' },
-      'V2_LIVE_HYBRID': { name: 'V2 Live Hybrid', subtitle: 'GBLAST LIVE', positionType: 'OPTIONS' },
-      'V2_LIVE_KITE': { name: 'V2 Live Kite', subtitle: 'GBLAST LIVE', positionType: 'OPTIONS' }
+      'V1_LIVE_HYBRID': { name: 'V1 Live Hybrid', subtitle: 'Live', positionType: 'OPTIONS' },
+      'V1_LIVE_KITE': { name: 'V1 Live Kite', subtitle: 'Live', positionType: 'OPTIONS' },
+      'V2_LIVE_HYBRID': { name: 'V2 Live Hybrid', subtitle: 'Live', positionType: 'OPTIONS' },
+      'V2_LIVE_KITE': { name: 'V2 Live Kite', subtitle: 'Live', positionType: 'OPTIONS' },
+      'GBLAST_LIVE': { name: 'GBLAST LIVE', subtitle: 'Live Versions', positionType: 'OPTIONS' }
     };
     return displays[strategy] || { name: strategy, subtitle: '', positionType: '' };
   };
@@ -445,7 +451,12 @@ const TradingDashboard = () => {
 
       {/* Strategy Tabs - Updated Format */}
       <div className="flex gap-3 mb-8 flex-wrap">
-        {['ALL', 'iTrack', 'TrendFlo', 'GBlast', 'GBlastV2', 'GBlastV3', 'Blaze', 'BlazeV2', 'BlazeV3', 'BlazeV4', 'V1_LIVE_HYBRID', 'V1_LIVE_KITE', 'V2_LIVE_HYBRID', 'V2_LIVE_KITE'].map((strategy) => {
+        {[
+          'ALL', 'iTrack', 'TrendFlo',
+          'GBlast', 'GBlastV2', 'GBlastV3',
+          'Blaze', 'BlazeV2', 'BlazeV3', 'BlazeV4',
+          'GBLAST_LIVE'
+        ].map((strategy) => {
           const display = strategy !== 'ALL' ? getStrategyDisplay(strategy) : null;
           return (
             <button
@@ -475,58 +486,71 @@ const TradingDashboard = () => {
         })}
       </div>
 
-      {/* GBLAST LIVE Summary Grid */}
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold mb-4 flex items-center gap-2" style={{ color: '#1762C7' }}>
-          <Activity size={24} />
-          GBLAST LIVE
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[
-            { id: 'V1_LIVE_HYBRID', label: 'V1 HYBRID' },
-            { id: 'V1_LIVE_KITE', label: 'V1 KITE' },
-            { id: 'V2_LIVE_HYBRID', label: 'V2 HYBRID' },
-            { id: 'V2_LIVE_KITE', label: 'V2 KITE' }
-          ].map(version => {
-            const versionStats = stats ? stats[version.id] : null;
-            if (!versionStats) return null;
-
-            return (
-              <div
-                key={version.id}
-                onClick={() => setActiveStrategy(version.id)}
-                className={`cursor-pointer rounded-2xl p-5 transition-all duration-300 transform hover:-translate-y-1 ${activeStrategy === version.id ? 'ring-4 ring-blue-500' : ''
-                  }`}
-                style={{
-                  background: 'white',
-                  boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)'
-                }}
+      {/* GBLAST LIVE Summary Grid - Only shown for GBLAST LIVE or its versions */}
+      {(activeStrategy === 'GBLAST_LIVE' || ['V1_LIVE_HYBRID', 'V1_LIVE_KITE', 'V2_LIVE_HYBRID', 'V2_LIVE_KITE'].includes(activeStrategy)) && (
+        <div className="mb-8">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-bold flex items-center gap-2" style={{ color: '#1762C7' }}>
+              <Activity size={24} />
+              GBLAST LIVE
+            </h2>
+            {activeStrategy !== 'GBLAST_LIVE' && (
+              <button
+                onClick={() => setActiveStrategy('GBLAST_LIVE')}
+                className="text-sm font-bold px-4 py-2 rounded-lg text-white"
+                style={{ background: 'linear-gradient(135deg, rgb(31, 168, 166) 0%, rgb(23, 98, 199) 100%)' }}
               >
-                <div className="flex justify-between items-start mb-3">
-                  <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">{version.label}</span>
-                  <div className={`p-2 rounded-lg ${versionStats.totalPnL >= 0 ? 'bg-emerald-50/50' : 'bg-red-50/50'}`}>
-                    {versionStats.totalPnL >= 0 ?
-                      <ArrowUpRight size={18} className="text-emerald-500" /> :
-                      <ArrowDownRight size={18} className="text-red-500" />
-                    }
+                ← Back to All Live
+              </button>
+            )}
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              { id: 'V1_LIVE_HYBRID', label: 'V1 HYBRID' },
+              { id: 'V1_LIVE_KITE', label: 'V1 KITE' },
+              { id: 'V2_LIVE_HYBRID', label: 'V2 HYBRID' },
+              { id: 'V2_LIVE_KITE', label: 'V2 KITE' }
+            ].map(version => {
+              const versionStats = stats ? stats[version.id] : null;
+              if (!versionStats) return null;
+
+              return (
+                <div
+                  key={version.id}
+                  onClick={() => setActiveStrategy(version.id)}
+                  className={`cursor-pointer rounded-2xl p-5 transition-all duration-300 transform hover:-translate-y-1 ${activeStrategy === version.id ? 'ring-4 ring-blue-500' : ''
+                    }`}
+                  style={{
+                    background: 'white',
+                    boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)'
+                  }}
+                >
+                  <div className="flex justify-between items-start mb-3">
+                    <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">{version.label}</span>
+                    <div className={`p-2 rounded-lg ${versionStats.totalPnL >= 0 ? 'bg-emerald-50/50' : 'bg-red-50/50'}`}>
+                      {versionStats.totalPnL >= 0 ?
+                        <ArrowUpRight size={18} className="text-emerald-500" /> :
+                        <ArrowDownRight size={18} className="text-red-500" />
+                      }
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className={`text-2xl font-black ${versionStats.totalPnL >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                      {formatPnL(versionStats.totalPnL)}
+                    </div>
+                    <div className="flex items-center justify-between text-xs font-semibold">
+                      <span className="text-gray-500">{versionStats.totalTrades} Trades</span>
+                      <span className={versionStats.winRate >= 50 ? 'text-emerald-500' : 'text-orange-500'}>
+                        {versionStats.winRate.toFixed(1)}% Win
+                      </span>
+                    </div>
                   </div>
                 </div>
-                <div className="space-y-1">
-                  <div className={`text-2xl font-black ${versionStats.totalPnL >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                    {formatPnL(versionStats.totalPnL)}
-                  </div>
-                  <div className="flex items-center justify-between text-xs font-semibold">
-                    <span className="text-gray-500">{versionStats.totalTrades} Trades</span>
-                    <span className={versionStats.winRate >= 50 ? 'text-emerald-500' : 'text-orange-500'}>
-                      {versionStats.winRate.toFixed(1)}% Win
-                    </span>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Statistics Cards */}
       {currentStats && (

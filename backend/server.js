@@ -69,7 +69,9 @@ async function getTradeFileList() {
   // Fallback to GitHub API (for Vercel production)
   try {
     async function fetchGitHubDir(folderPath) {
-      const url = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/${folderPath}?ref=${GITHUB_BRANCH}`;
+      // Properly encode the folder path (e.g. "LIVE - V1" -> "LIVE%20-%20V1")
+      const encodedPath = folderPath.split('/').map(segment => encodeURIComponent(segment)).join('/');
+      const url = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/${encodedPath}?ref=${GITHUB_BRANCH}`;
       const options = { headers: { 'User-Agent': 'Node.js' } };
 
       const response = await new Promise((resolve, reject) => {
@@ -140,7 +142,9 @@ async function fetchCSVFromGitHub(filename) {
 
   // Fall back to GitHub
   return new Promise((resolve, reject) => {
-    const url = `https://raw.githubusercontent.com/${GITHUB_USERNAME}/${GITHUB_REPO}/${GITHUB_BRANCH}/trades/${filename}`;
+    // Properly encode the filename/path (e.g. "LIVE - V1/file.csv" -> "LIVE%20-%20V1/file.csv")
+    const encodedFilename = filename.split('/').map(segment => encodeURIComponent(segment)).join('/');
+    const url = `https://raw.githubusercontent.com/${GITHUB_USERNAME}/${GITHUB_REPO}/${GITHUB_BRANCH}/trades/${encodedFilename}`;
 
     https.get(url, (response) => {
       if (response.statusCode !== 200) {
@@ -606,7 +610,10 @@ app.get('/api/trades', async (req, res) => {
       V1_LIVE_HYBRID: calculateStats(trades.filter(t => t.strategy === 'V1_LIVE_HYBRID')),
       V1_LIVE_KITE: calculateStats(trades.filter(t => t.strategy === 'V1_LIVE_KITE')),
       V2_LIVE_HYBRID: calculateStats(trades.filter(t => t.strategy === 'V2_LIVE_HYBRID')),
-      V2_LIVE_KITE: calculateStats(trades.filter(t => t.strategy === 'V2_LIVE_KITE'))
+      V2_LIVE_KITE: calculateStats(trades.filter(t => t.strategy === 'V2_LIVE_KITE')),
+      GBLAST_LIVE: calculateStats(trades.filter(t =>
+        ['V1_LIVE_HYBRID', 'V1_LIVE_KITE', 'V2_LIVE_HYBRID', 'V2_LIVE_KITE'].includes(t.strategy)
+      ))
     };
 
     res.json({
