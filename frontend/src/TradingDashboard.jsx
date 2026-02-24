@@ -495,12 +495,11 @@ const TradingDashboard = () => {
               <div
                 key={version.id}
                 onClick={() => setActiveStrategy(version.id)}
-                className={`cursor-pointer rounded-2xl p-5 transition-all duration-300 transform hover:-translate-y-1 ${activeStrategy === version.id ? 'ring-4 ring-offset-2' : ''
+                className={`cursor-pointer rounded-2xl p-5 transition-all duration-300 transform hover:-translate-y-1 ${activeStrategy === version.id ? 'ring-4 ring-blue-500' : ''
                   }`}
                 style={{
                   background: 'white',
-                  boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)',
-                  ringColor: '#1762C7'
+                  boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)'
                 }}
               >
                 <div className="flex justify-between items-start mb-3">
