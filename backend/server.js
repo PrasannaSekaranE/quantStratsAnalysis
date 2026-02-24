@@ -209,16 +209,21 @@ function normalizeTrade(row, filename) {
 
   let strategy = 'Unknown';
   const filenameLower = filename.toLowerCase();
+  const baseName = path.basename(filename).toLowerCase();
 
-  const isBlaze = filenameLower.startsWith('blaze_');
+  const isBlaze = baseName.startsWith('blaze_');
 
-  const isGBlast = filenameLower.includes('live_trades') ||
-    filenameLower.includes('gblast') ||
-    filenameLower.includes('g-blast') ||
-    filenameLower.includes('g_blast') ||
-    filenameLower.startsWith('v1_') ||
-    filenameLower.startsWith('v2_') ||
-    filenameLower.startsWith('v3_');
+  const isGBlast = filenameLower.includes('live - v1') ||
+    filenameLower.includes('live - v2') ||
+    baseName.includes('live_trades') ||
+    baseName.includes('gblast') ||
+    baseName.includes('g-blast') ||
+    baseName.includes('g_blast') ||
+    baseName.includes('hybrid_trades') ||
+    baseName.includes('paper_trades') ||
+    baseName.startsWith('v1_') ||
+    baseName.startsWith('v2_') ||
+    baseName.startsWith('v3_');
 
   if (isBlaze) {
     const type = row.type || row.Type || row.TYPE || '';
@@ -278,7 +283,7 @@ function normalizeTrade(row, filename) {
     return Number(val);
   };
 
-  let symbol = row.symbol || row.Symbol || row.SYMBOL || '';
+  let symbol = row.symbol || row.Symbol || row.SYMBOL || row.kite_symbol || row.tradingsymbol || '';
   if (isGBlast && !symbol) {
     const strike = row.entry_strike || row.Entry_Strike || row.ENTRY_STRIKE || '';
     const optionType = row.option_type || row.Option_Type || row.OPTION_TYPE || '';
@@ -474,7 +479,7 @@ async function loadTradesFromGitHub() {
         }
 
         // Apply 2:00 PM filter to ALL Blaze trades (v1, v2, v3, v4)
-        const isBlaze = filename.toLowerCase().startsWith('blaze_');
+        const isBlaze = path.basename(filename).toLowerCase().startsWith('blaze_');
         if (isBlaze) {
           const beforeFilterCount = validTrades.length;
           const beforeFilterPnL = validTrades.reduce((sum, t) => sum + t.net_pnl, 0);
