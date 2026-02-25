@@ -230,6 +230,7 @@ const TradingDashboard = () => {
       'BlazeV2': { name: 'Blaze (V2)', subtitle: 'Paper', positionType: 'OPTIONS' },
       'BlazeV3': { name: 'Blaze (V3)', subtitle: 'Paper', positionType: 'OPTIONS' },
       'BlazeV4': { name: 'Blaze (V4)', subtitle: 'Paper', positionType: 'OPTIONS' },
+      'BlazeV4_2': { name: 'Blaze (V4.2)', subtitle: 'Paper', positionType: 'OPTIONS' },
       'V1_LIVE_HYBRID': { name: 'V1 Live Hybrid', subtitle: 'Live', positionType: 'OPTIONS' },
       'V1_LIVE_KITE': { name: 'V1 Live Kite', subtitle: 'Live', positionType: 'OPTIONS' },
       'V2_LIVE_HYBRID': { name: 'V2 Live Hybrid', subtitle: 'Live', positionType: 'OPTIONS' },
@@ -454,7 +455,7 @@ const TradingDashboard = () => {
         {[
           'ALL', 'iTrack', 'TrendFlo',
           'GBlast', 'GBlastV2', 'GBlastV3',
-          'Blaze', 'BlazeV2', 'BlazeV3', 'BlazeV4',
+          'Blaze', 'BlazeV2', 'BlazeV3', 'BlazeV4', 'BlazeV4_2',
           'GBLAST_LIVE'
         ].map((strategy) => {
           const display = strategy !== 'ALL' ? getStrategyDisplay(strategy) : null;

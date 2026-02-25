@@ -233,6 +233,8 @@ function normalizeTrade(row, filename) {
       strategy = 'BlazeV3';
     } else if (type === 'v4') {
       strategy = 'BlazeV4';
+    } else if (type === 'v4.2') {
+      strategy = 'BlazeV4_2';
     } else {
       strategy = 'Blaze';
     }
@@ -617,6 +619,7 @@ app.get('/api/trades', async (req, res) => {
       BlazeV2: calculateStats(trades.filter(t => t.strategy === 'BlazeV2')),
       BlazeV3: calculateStats(trades.filter(t => t.strategy === 'BlazeV3')),
       BlazeV4: calculateStats(trades.filter(t => t.strategy === 'BlazeV4')),
+      BlazeV4_2: calculateStats(trades.filter(t => t.strategy === 'BlazeV4_2')),
       V1_LIVE_HYBRID: calculateStats(trades.filter(t => t.strategy === 'V1_LIVE_HYBRID')),
       V1_LIVE_KITE: calculateStats(trades.filter(t => t.strategy === 'V1_LIVE_KITE')),
       V2_LIVE_HYBRID: calculateStats(trades.filter(t => t.strategy === 'V2_LIVE_HYBRID')),
