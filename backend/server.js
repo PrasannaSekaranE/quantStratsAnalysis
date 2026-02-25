@@ -370,8 +370,13 @@ async function parseBlazeLog(filename) {
 
       // Detect Trade Entry
       if (line.includes('[TRADE ENTRY] BLAZE TRADE ENTERED')) {
+        let logStrategy = 'Blaze';
+        if (filename.toUpperCase().includes('V2')) logStrategy = 'BlazeV2';
+        else if (filename.toUpperCase().includes('V3')) logStrategy = 'BlazeV3';
+        else if (filename.toUpperCase().includes('V4')) logStrategy = 'BlazeV4';
+
         currentTrade = {
-          strategy: 'BlazeV4',
+          strategy: logStrategy,
           source_file: filename,
           status: 'CLOSED' // Assume closed if we find an exit later
         };
