@@ -15,11 +15,14 @@ const App = () => {
         position: 'sticky', top: 0, zIndex: 100,
         boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
       }}>
-        <span style={{
-          color: 'white', fontWeight: 800, fontSize: '16px',
-          letterSpacing: '0.5px', marginRight: '16px',
-          fontFamily: '"Montserrat", sans-serif', alignSelf: 'center'
-        }}>Quant Strategies Analysis</span>
+        <img
+          src="/logo.png"
+          alt="XIRR Logo"
+          style={{ height: '32px', width: 'auto', alignSelf: 'center', marginRight: '16px', objectFit: 'contain' }}
+          onError={(e) => {
+            e.target.style.display = 'none';
+          }}
+        />
 
         {[
           { id: 'paper', label: 'Paper', desc: 'Back-tested strategies' },

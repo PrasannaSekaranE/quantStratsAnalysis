@@ -17,8 +17,37 @@ const fmtTime = (s) => {
 const fmtDate = (s) => {
     if (!s) return '—';
     const d = s.includes('T') ? new Date(s) : new Date(s.replace(' ', 'T'));
-    return isNaN(d) ? s : d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+    return isNaN(d) ? s : d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 };
+
+/* ── Bar Loader Component ── */
+const BarLoader = () => (
+    <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="text-center">
+            <div className="mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 100" width="160" height="133" style={{ display: 'block', margin: '0 auto' }}>
+                    <rect x="12" y="60" width="10" height="40" fill="#034C8C" rx="1">
+                        <animate attributeName="height" values="40;70;40" dur="1s" begin="0s" repeatCount="indefinite" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1" />
+                        <animate attributeName="y" values="60;30;60" dur="1s" begin="0s" repeatCount="indefinite" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1" />
+                    </rect>
+                    <rect x="37" y="60" width="10" height="40" fill="#03738C" rx="1">
+                        <animate attributeName="height" values="40;60;40" dur="1s" begin="0.18s" repeatCount="indefinite" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1" />
+                        <animate attributeName="y" values="60;40;60" dur="1s" begin="0.18s" repeatCount="indefinite" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1" />
+                    </rect>
+                    <rect x="62" y="60" width="10" height="40" fill="#038C8C" rx="1">
+                        <animate attributeName="height" values="40;80;40" dur="1s" begin="0.36s" repeatCount="indefinite" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1" />
+                        <animate attributeName="y" values="60;20;60" dur="1s" begin="0.36s" repeatCount="indefinite" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1" />
+                    </rect>
+                    <rect x="87" y="60" width="10" height="40" fill="#038C7F" rx="1">
+                        <animate attributeName="height" values="40;65;40" dur="1s" begin="0.54s" repeatCount="indefinite" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1" />
+                        <animate attributeName="y" values="60;35;60" dur="1s" begin="0.54s" repeatCount="indefinite" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1" />
+                    </rect>
+                </svg>
+            </div>
+            <p className="text-xl font-semibold text-gray-700">Loading trading data...</p>
+        </div>
+    </div>
+);
 
 /* ── Stat Card ── */
 const StatCard = ({ label, value, sub, color = '#1F62C7', icon: Icon }) => (
@@ -89,11 +118,34 @@ const VersionPanel = ({ version, data, accentColor, accentLight }) => {
                             color={parseFloat(totalReturn) >= 0 ? '#16a34a' : '#dc2626'} />
                     </div>
 
-                    {/* Date filter */}
-                    <div className="flex items-center gap-3 mb-5">
-                        <span className="text-sm font-semibold text-gray-500">Filter by date:</span>
+                    {/* Date filter with Calendar */}
+                    <div className="flex items-center gap-4 mb-5">
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm font-semibold text-gray-500">Filter by date:</span>
+                            <div className="relative flex items-center">
+                                <input
+                                    type="date"
+                                    className="border rounded-lg pl-3 pr-2 py-2 text-sm font-semibold outline-none transition-all focus:ring-2"
+                                    style={{ borderColor: accentColor, color: accentColor }}
+                                    value={filterDate === 'ALL' ? '' : filterDate}
+                                    onChange={e => setFilterDate(e.target.value || 'ALL')}
+                                />
+                                {filterDate !== 'ALL' && (
+                                    <button
+                                        onClick={() => setFilterDate('ALL')}
+                                        className="ml-2 text-xs font-bold hover:underline"
+                                        style={{ color: accentColor }}>
+                                        Clear
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Dropdown fallback for quick selection */}
+                        <div className="h-6 w-px bg-gray-200 mx-2"></div>
+
                         <select
-                            className="border rounded-lg px-3 py-2 text-sm font-semibold"
+                            className="border rounded-lg px-3 py-2 text-sm font-semibold bg-transparent outline-none"
                             style={{ borderColor: accentColor, color: accentColor }}
                             value={filterDate}
                             onChange={e => setFilterDate(e.target.value)}>
@@ -105,7 +157,7 @@ const VersionPanel = ({ version, data, accentColor, accentLight }) => {
 
                     {/* Trades table */}
                     {filtered.length === 0 ? (
-                        <div className="text-center text-gray-400 py-12">No trades found.</div>
+                        <div className="text-center text-gray-400 py-12">No trades found for this date.</div>
                     ) : (
                         <div className="overflow-x-auto rounded-2xl" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
                             <table className="w-full text-sm">
@@ -210,6 +262,8 @@ const LivePage = () => {
             overallReturn: ((totalCapital - 100000) / 100000 * 100).toFixed(2),
         };
     }, [data]);
+
+    if (loading && !data) return <BarLoader />;
 
     return (
         <div style={{ background: '#eaf4f7', minHeight: '100vh', padding: '24px', zoom: 0.9 }}>
