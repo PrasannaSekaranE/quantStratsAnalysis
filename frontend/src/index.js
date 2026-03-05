@@ -19,11 +19,11 @@ const App = () => {
           color: 'white', fontWeight: 800, fontSize: '16px',
           letterSpacing: '0.5px', marginRight: '16px',
           fontFamily: '"Montserrat", sans-serif', alignSelf: 'center'
-        }}>⚡ Quant AI</span>
+        }}>Quant Strategies Analysis</span>
 
         {[
-          { id: 'paper', label: '📄 Paper', desc: 'Back-tested strategies' },
-          { id: 'live', label: '📡 Live', desc: 'G Blast Live' },
+          { id: 'paper', label: 'Paper', desc: 'Back-tested strategies' },
+          { id: 'live', label: 'Live', desc: 'G Blast Live' },
         ].map(({ id, label, desc }) => (
           <button
             key={id}

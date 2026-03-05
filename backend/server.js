@@ -660,16 +660,50 @@ function parseCSVFile(filePath) {
   });
 }
 
-async function loadLiveVersion(folder, filePattern, normaliser) {
-  if (!fs.existsSync(folder)) return [];
-  const files = fs.readdirSync(folder)
-    .filter(f => f.match(filePattern) && f.endsWith('.csv'))
-    .sort();
+async function loadLiveVersion(githubSubPath, filePattern, normaliser) {
+  const localFolder = path.join(__dirname, '..', 'trades', githubSubPath);
+  let files = [];
+
+  if (fs.existsSync(localFolder)) {
+    // Local development: scan folder directly
+    files = fs.readdirSync(localFolder)
+      .filter(f => f.match(filePattern) && f.endsWith('.csv'))
+      .sort()
+      .map(f => `${githubSubPath}/${f}`);
+  } else {
+    // Production (Vercel): list files via GitHub API
+    try {
+      const encodedPath = githubSubPath.split('/').map(s => encodeURIComponent(s)).join('/');
+      const apiUrl = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/trades/${encodedPath}?ref=${GITHUB_BRANCH}`;
+      const listing = await new Promise((resolve, reject) => {
+        https.get(apiUrl, { headers: { 'User-Agent': 'Node.js' } }, res => {
+          let data = '';
+          res.on('data', c => data += c);
+          res.on('end', () => {
+            try { resolve(JSON.parse(data)); }
+            catch (e) { reject(e); }
+          });
+        }).on('error', reject);
+      });
+      if (Array.isArray(listing)) {
+        files = listing
+          .filter(item => item.type === 'file' && item.name.match(filePattern) && item.name.endsWith('.csv'))
+          .sort((a, b) => a.name.localeCompare(b.name))
+          .map(item => `${githubSubPath}/${item.name}`);
+      }
+    } catch (e) {
+      console.error(`[live-trades] Failed to list GitHub dir ${githubSubPath}:`, e.message);
+    }
+  }
 
   let allRows = [];
-  for (const file of files) {
-    const rows = await parseCSVFile(path.join(folder, file));
-    allRows = allRows.concat(rows.map(r => normaliser(r)));
+  for (const relPath of files) {
+    try {
+      const result = await fetchCSVFromGitHub(relPath);
+      allRows = allRows.concat(result.trades.map(r => normaliser(r)));
+    } catch (e) {
+      console.error(`[live-trades] Failed to load ${relPath}:`, e.message);
+    }
   }
 
   // Sort by entry_time ascending, then apply compounding
@@ -746,12 +780,9 @@ function calcLiveStats(trades) {
 
 app.get('/api/live-trades', async (req, res) => {
   try {
-    const v1Folder = path.join(LIVE_FOLDER, 'V1');
-    const v2Folder = path.join(LIVE_FOLDER, 'V2');
-
     const [v1Trades, v2Trades] = await Promise.all([
-      loadLiveVersion(v1Folder, /^hybrid_trades_live_/, normaliseV1),
-      loadLiveVersion(v2Folder, /^kite_live_trades_/, normaliseV2),
+      loadLiveVersion('G - BLAST - LIVE/V1', /^hybrid_trades_live_/, normaliseV1),
+      loadLiveVersion('G - BLAST - LIVE/V2', /^kite_live_trades_/, normaliseV2),
     ]);
 
     res.json({

@@ -222,7 +222,7 @@ const LivePage = () => {
                             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
                             fontFamily: '"Montserrat", sans-serif'
                         }}>
-                        📡 G Blast Live
+                        G Blast Live
                     </h1>
                     <p className="text-gray-500 text-sm">Live trades · Sequential compounding · ₹50K per version</p>
                 </div>
