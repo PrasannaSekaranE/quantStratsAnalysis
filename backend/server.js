@@ -644,6 +644,129 @@ app.get('/api/trades', async (req, res) => {
   }
 });
 
+// ─── G-BLAST LIVE: /api/live-trades ────────────────────────────────────────
+const LIVE_FOLDER = path.join(__dirname, '..', 'trades', 'G - BLAST - LIVE');
+const STARTING_CAPITAL = 50000; // ₹50K per version
+
+function parseCSVFile(filePath) {
+  return new Promise((resolve, reject) => {
+    const rows = [];
+    if (!fs.existsSync(filePath)) return resolve([]);
+    fs.createReadStream(filePath)
+      .pipe(csv())
+      .on('data', row => rows.push(row))
+      .on('end', () => resolve(rows))
+      .on('error', reject);
+  });
+}
+
+async function loadLiveVersion(folder, filePattern, normaliser) {
+  if (!fs.existsSync(folder)) return [];
+  const files = fs.readdirSync(folder)
+    .filter(f => f.match(filePattern) && f.endsWith('.csv'))
+    .sort();
+
+  let allRows = [];
+  for (const file of files) {
+    const rows = await parseCSVFile(path.join(folder, file));
+    allRows = allRows.concat(rows.map(r => normaliser(r)));
+  }
+
+  // Sort by entry_time ascending, then apply compounding
+  allRows.sort((a, b) => new Date(a.entry_time) - new Date(b.entry_time));
+
+  let capital = STARTING_CAPITAL;
+  return allRows.map((trade, idx) => {
+    const entry = { ...trade, trade_no: idx + 1, starting_capital: capital };
+    capital = Math.round((capital + (trade.total_pnl || 0)) * 100) / 100;
+    entry.ending_capital = capital;
+    entry.return_pct = Math.round(((trade.total_pnl || 0) / entry.starting_capital) * 10000) / 100;
+    return entry;
+  });
+}
+
+function normaliseV1(row) {
+  const signal = (row.signal_type || '').toUpperCase();
+  const pnl = parseFloat(row.total_pnl) || 0;
+  return {
+    entry_time: row.entry_time || '',
+    exit_time: row.exit_time || '',
+    symbol: row.kite_symbol || '',
+    direction: signal === 'BEARISH' ? 'PUT' : 'CALL',
+    option_type: row.option_type || '',
+    entry_price: parseFloat(row.entry_price) || 0,
+    exit_price: parseFloat(row.exit_price) || 0,
+    lots: parseInt(row.lots) || 0,
+    quantity: parseInt(row.quantity) || 0,
+    total_pnl: pnl,
+    pnl_pct: parseFloat(row.pnl_pct) || 0,
+    exit_reason: row.exit_reason || '',
+    status: row.status || '',
+    date: (row.entry_time || '').split(' ')[0],
+    version: 'V1',
+  };
+}
+
+function normaliseV2(row) {
+  const signal = (row.signal_type || '').toUpperCase();
+  const pnl = parseFloat(row.total_pnl) || 0;
+  return {
+    entry_time: row.entry_time || '',
+    exit_time: row.exit_time || '',
+    symbol: row.tradingsymbol || '',
+    direction: signal === 'BEARISH' ? 'PUT' : 'CALL',
+    option_type: row.option_type || row.option_type || '',
+    entry_price: parseFloat(row.entry_price) || 0,
+    exit_price: parseFloat(row.exit_price) || 0,
+    lots: parseInt(row.lots) || 0,
+    quantity: parseInt(row.quantity) || 0,
+    total_pnl: pnl,
+    pnl_pct: parseFloat(row.pnl_pct) || 0,
+    exit_reason: row.exit_reason || '',
+    status: row.status || '',
+    date: (row.entry_time || '').split(' ')[0],
+    version: 'V2',
+  };
+}
+
+function calcLiveStats(trades) {
+  if (!trades.length) return { totalTrades: 0, totalPnL: 0, winRate: 0, currentCapital: STARTING_CAPITAL };
+  const winners = trades.filter(t => t.total_pnl > 0);
+  const totalPnL = trades.reduce((s, t) => s + t.total_pnl, 0);
+  return {
+    totalTrades: trades.length,
+    totalPnL: Math.round(totalPnL * 100) / 100,
+    winners: winners.length,
+    losers: trades.filter(t => t.total_pnl < 0).length,
+    winRate: Math.round((winners.length / trades.length) * 10000) / 100,
+    currentCapital: trades[trades.length - 1]?.ending_capital ?? STARTING_CAPITAL,
+    overallReturn: Math.round(((totalPnL / STARTING_CAPITAL) * 10000)) / 100,
+  };
+}
+
+app.get('/api/live-trades', async (req, res) => {
+  try {
+    const v1Folder = path.join(LIVE_FOLDER, 'V1');
+    const v2Folder = path.join(LIVE_FOLDER, 'V2');
+
+    const [v1Trades, v2Trades] = await Promise.all([
+      loadLiveVersion(v1Folder, /^hybrid_trades_live_/, normaliseV1),
+      loadLiveVersion(v2Folder, /^kite_live_trades_/, normaliseV2),
+    ]);
+
+    res.json({
+      success: true,
+      v1: { trades: v1Trades, stats: calcLiveStats(v1Trades) },
+      v2: { trades: v2Trades, stats: calcLiveStats(v2Trades) },
+      startingCapital: STARTING_CAPITAL,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error('Error fetching live trades:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // For Vercel serverless function
 module.exports = app;
 
