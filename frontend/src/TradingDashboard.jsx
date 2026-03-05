@@ -235,7 +235,8 @@ const TradingDashboard = () => {
       'V1_LIVE_KITE': { name: 'V1 Live Kite', subtitle: 'Live', positionType: 'OPTIONS' },
       'V2_LIVE_HYBRID': { name: 'V2 Live Hybrid', subtitle: 'Live', positionType: 'OPTIONS' },
       'V2_LIVE_KITE': { name: 'V2 Live Kite', subtitle: 'Live', positionType: 'OPTIONS' },
-      'GBLAST_LIVE': { name: 'GBLAST LIVE', subtitle: 'Live Versions', positionType: 'OPTIONS' }
+      'GBLAST_LIVE': { name: 'GBLAST LIVE', subtitle: 'Live Versions', positionType: 'OPTIONS' },
+      'GBlastV2_Upgrade': { name: 'G-Blast (v2 Upgrade)', subtitle: 'Paper', positionType: 'OPTIONS' }
     };
     return displays[strategy] || { name: strategy, subtitle: '', positionType: '' };
   };
@@ -454,7 +455,7 @@ const TradingDashboard = () => {
       <div className="flex gap-3 mb-8 flex-wrap">
         {[
           'ALL', 'iTrack', 'TrendFlo',
-          'GBlast', 'GBlastV2', 'GBlastV3',
+          'GBlast', 'GBlastV2', 'GBlastV2_Upgrade', 'GBlastV3',
           'Blaze', 'BlazeV2', 'BlazeV3', 'BlazeV4', 'BlazeV4_2',
           'GBLAST_LIVE'
         ].map((strategy) => {
