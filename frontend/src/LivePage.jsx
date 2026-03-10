@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-    TrendingUp, TrendingDown, Activity, IndianRupee,
-    ChevronDown, ChevronUp, RefreshCw, BarChart3,
+    TrendingUp, Activity, IndianRupee,
+    RefreshCw, BarChart3,
     ArrowUpRight, ArrowDownRight, Target, Calendar,
     AlertCircle
 } from 'lucide-react';
@@ -87,7 +87,6 @@ const LivePage = () => {
     const [error, setError] = useState(null);
     const [activeVersion, setActiveVersion] = useState('ALL'); // 'ALL', 'V1', 'V2'
     const [selectedDate, setSelectedDate] = useState('ALL');
-    const [logoError, setLogoError] = useState(false);
 
     const fetchData = async () => {
         setLoading(true);
@@ -428,8 +427,8 @@ const LivePage = () => {
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${t.exit_reason?.includes('TARGET') ? 'bg-emerald-50 text-emerald-600' :
-                                                    t.exit_reason?.includes('STOP') ? 'bg-red-50 text-red-600' :
-                                                        'bg-gray-100 text-gray-500'
+                                                t.exit_reason?.includes('STOP') ? 'bg-red-50 text-red-600' :
+                                                    'bg-gray-100 text-gray-500'
                                                 }`}>
                                                 {t.exit_reason || '—'}
                                             </span>
