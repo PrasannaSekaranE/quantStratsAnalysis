@@ -3,7 +3,7 @@ import {
     TrendingUp, Activity, IndianRupee,
     RefreshCw, BarChart3,
     ArrowUpRight, ArrowDownRight, Target, Calendar,
-    AlertCircle
+    AlertCircle, ChevronUp, ChevronDown
 } from 'lucide-react';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
@@ -86,6 +86,7 @@ const LivePage = () => {
     const [error, setError] = useState(null);
     const [activeVersion, setActiveVersion] = useState('ALL'); // 'ALL', 'V1', 'V2'
     const [selectedDate, setSelectedDate] = useState('ALL');
+    const [sortConfig, setSortConfig] = useState({ key: 'entry_time', direction: 'desc' });
 
     const fetchData = async () => {
         setLoading(true);
@@ -109,41 +110,72 @@ const LivePage = () => {
         if (!data) return [];
         if (activeVersion === 'V1') return data.v1.trades;
         if (activeVersion === 'V2') return data.v2.trades;
-        // ALL: Combine and sort by entry_time descending
-        return [...data.v1.trades, ...data.v2.trades].sort((a, b) => new Date(b.entry_time) - new Date(a.entry_time));
+        // ALL: Combine
+        return [...data.v1.trades, ...data.v2.trades];
     }, [data, activeVersion]);
 
-    // Available dates for selected version
-    const availableDates = useMemo(() => {
-        const dates = [...new Set(activeTrades.map(t => t.date))].filter(Boolean);
-        return dates.sort((a, b) => new Date(b) - new Date(a));
-    }, [activeTrades]);
+    // Handle Sorting
+    const handleSort = (key) => {
+        setSortConfig(prev => ({
+            key,
+            direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
+        }));
+    };
 
-    // Filtered trades by date
-    const filteredTrades = useMemo(() => {
-        if (selectedDate === 'ALL') return activeTrades;
-        return activeTrades.filter(t => t.date === selectedDate);
-    }, [activeTrades, selectedDate]);
+    // Filtered & Sorted Trades
+    const processedTrades = useMemo(() => {
+        let result = [...activeTrades];
+
+        // Date filter
+        if (selectedDate !== 'ALL') {
+            result = result.filter(t => t.date === selectedDate);
+        }
+
+        // Apply Sorting
+        if (sortConfig.key) {
+            result.sort((a, b) => {
+                let valA = a[sortConfig.key];
+                let valB = b[sortConfig.key];
+
+                // Handle numbers
+                if (typeof valA === 'number' && typeof valB === 'number') {
+                    return sortConfig.direction === 'asc' ? valA - valB : valB - valA;
+                }
+
+                // Handle dates/strings
+                valA = valA?.toString().toLowerCase() || '';
+                valB = valB?.toString().toLowerCase() || '';
+                if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
+                if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
+                return 0;
+            });
+        } else {
+            // Default sort by entry_time descending if no key set (shouldn't happen with state default)
+            result.sort((a, b) => new Date(b.entry_time) - new Date(a.entry_time));
+        }
+
+        return result;
+    }, [activeTrades, selectedDate, sortConfig]);
 
     // Calculate stats for current selection
     const currentStats = useMemo(() => {
-        if (filteredTrades.length === 0) {
+        // Stats should be calculated on the DATE-FILTERED data, but maybe ignore sort for stats?
+        // Actually stats depend on the set of trades, so processedTrades is fine (sort doesn't affect sum/avg)
+        if (processedTrades.length === 0) {
             return {
                 totalTrades: 0, totalPnL: 0, winners: 0, losers: 0, winRate: 0,
                 avgProfit: 0, avgLoss: 0, avgPnL: 0, capital: activeVersion === 'ALL' ? 100000 : 50000
             };
         }
 
-        const totalPnL = filteredTrades.reduce((s, t) => s + (t.total_pnl || 0), 0);
-        const winners = filteredTrades.filter(t => t.total_pnl > 0);
-        const losers = filteredTrades.filter(t => t.total_pnl < 0);
-        const winRate = (winners.length / filteredTrades.length) * 100;
+        const totalPnL = processedTrades.reduce((s, t) => s + (t.total_pnl || 0), 0);
+        const winners = processedTrades.filter(t => t.total_pnl > 0);
+        const losers = processedTrades.filter(t => t.total_pnl < 0);
+        const winRate = (winners.length / processedTrades.length) * 100;
 
         const avgProfit = winners.length > 0 ? winners.reduce((s, t) => s + t.total_pnl, 0) / winners.length : 0;
         const avgLoss = losers.length > 0 ? losers.reduce((s, t) => s + t.total_pnl, 0) / losers.length : 0;
 
-        // Final capital for the latest trade in selection
-        // Actually, if filtered, it's safer to use the base stats or re-calculate
         let capital = 0;
         if (activeVersion === 'ALL') {
             const v1End = data.v1.trades[data.v1.trades.length - 1]?.ending_capital || 50000;
@@ -155,17 +187,17 @@ const LivePage = () => {
         }
 
         return {
-            totalTrades: filteredTrades.length,
+            totalTrades: processedTrades.length,
             totalPnL,
             winners: winners.length,
             losers: losers.length,
             winRate,
             avgProfit,
             avgLoss,
-            avgPnL: totalPnL / filteredTrades.length,
+            avgPnL: totalPnL / processedTrades.length,
             capital
         };
-    }, [filteredTrades, activeVersion, data]);
+    }, [processedTrades, activeVersion, data]);
 
     if (loading && !data) return <BarLoader />;
 
@@ -347,24 +379,31 @@ const LivePage = () => {
                 </div>
             </div>
 
-            {/* Date Selection Dropdown */}
+            {/* Date Selection - Calendar Input */}
             <div className="mb-8 flex items-center gap-4 bg-white p-4 rounded-2xl shadow-sm">
                 <div className="flex items-center gap-2 px-4 border-r border-gray-100">
                     <Calendar size={20} className="text-gray-400" />
-                    <span className="font-bold text-gray-700">Filter by Date</span>
+                    <span className="font-bold text-gray-700 whitespace-nowrap">Filter by Date</span>
                 </div>
-                <select
-                    value={selectedDate}
-                    onChange={(e) => setSelectedDate(e.target.value)}
-                    className="flex-1 bg-transparent outline-none font-semibold text-gray-600"
-                >
-                    <option value="ALL">All Available Dates</option>
-                    {availableDates.map(date => (
-                        <option key={date} value={date}>{formatDate(date)}</option>
-                    ))}
-                </select>
+                <div className="flex-1 flex items-center gap-3">
+                    <input
+                        type="date"
+                        value={selectedDate === 'ALL' ? '' : selectedDate}
+                        onChange={(e) => setSelectedDate(e.target.value || 'ALL')}
+                        className="bg-transparent outline-none font-semibold text-gray-600 cursor-pointer border rounded-lg px-4 py-1 focus:ring-2 focus:ring-blue-100 transition-all"
+                        style={{ color: '#1762C7', borderColor: '#eef2ff' }}
+                    />
+                    {selectedDate !== 'ALL' && (
+                        <button
+                            onClick={() => setSelectedDate('ALL')}
+                            className="bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-1 rounded-lg text-xs font-bold transition-all"
+                        >
+                            CLEAR
+                        </button>
+                    )}
+                </div>
                 <div className="text-sm text-gray-400 font-medium px-4">
-                    {filteredTrades.length} Trades Found
+                    {processedTrades.length} Trades Found
                 </div>
             </div>
 
@@ -376,24 +415,39 @@ const LivePage = () => {
                             <tr style={{ background: 'linear-gradient(135deg, #f8faff 0%, #eef2ff 100%)' }}>
                                 {[
                                     { k: 'trade_no', l: '#' },
-                                    { k: 'date', l: 'Time' },
+                                    { k: 'entry_time', l: 'Time' },
                                     { k: 'symbol', l: 'Instrument' },
                                     { k: 'direction', l: 'Dir' },
                                     { k: 'entry_price', l: 'Entry' },
                                     { k: 'exit_price', l: 'Exit' },
                                     { k: 'total_pnl', l: 'P&L' },
-                                    { k: 'capital', l: 'Running Capital' },
+                                    { k: 'ending_capital', l: 'Capital' },
                                     { k: 'return_pct', l: 'Ret%' },
                                     { k: 'exit_reason', l: 'Outcome' }
                                 ].map(h => (
-                                    <th key={h.k} className="px-6 py-5 text-sm font-bold uppercase tracking-wider text-gray-500">
-                                        {h.l}
+                                    <th
+                                        key={h.k}
+                                        onClick={() => handleSort(h.k)}
+                                        className="px-6 py-5 text-sm font-bold uppercase tracking-wider text-gray-500 cursor-pointer hover:text-blue-600 transition-colors group"
+                                    >
+                                        <div className="flex items-center gap-1">
+                                            {h.l}
+                                            <div className="flex flex-col opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <ChevronUp size={10} className={sortConfig.key === h.k && sortConfig.direction === 'asc' ? 'text-blue-600' : 'text-gray-300'} />
+                                                <ChevronDown size={10} className={sortConfig.key === h.k && sortConfig.direction === 'desc' ? 'text-blue-600' : 'text-gray-300'} />
+                                            </div>
+                                            {sortConfig.key === h.k && (
+                                                <div className="flex flex-col">
+                                                    {sortConfig.direction === 'asc' ? <ChevronUp size={10} className="text-blue-600" /> : <ChevronDown size={10} className="text-blue-600" />}
+                                                </div>
+                                            )}
+                                        </div>
                                     </th>
                                 ))}
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredTrades.map((t, i) => {
+                            {processedTrades.map((t, i) => {
                                 const isWin = (t.total_pnl || 0) > 0;
                                 return (
                                     <tr key={i} className="border-b border-gray-50 hover:bg-blue-50/30 transition-colors">
