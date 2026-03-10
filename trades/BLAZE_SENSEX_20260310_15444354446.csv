@@ -1,0 +1,2 @@
+entry_time,sensex_signal,sensex_spot,sensex_atm,entry_strike,option_type,entry_price,exit_target,stop_loss,original_stop_loss,lot_size,quantity_lots,capital_deployed,instrument_key,status,exit_time,exit_price,pnl_per_lot,total_pnl,pnl_pct,exit_reason,type
+2026-03-10 09:16:00.000000,BULLISH,78159.03,78200,77900,CE,866.3,952.93,563.095,563.095,20,5,86630.0,BSE_FO|845772,CLOSED,2026-03-10 15:00:00.000000,739.05,-127.25,-12725.0,-14.688907,EOD,v4.2

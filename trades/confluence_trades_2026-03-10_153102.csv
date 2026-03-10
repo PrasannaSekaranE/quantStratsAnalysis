@@ -1,0 +1,2 @@
+symbol,entry_time,exit_time,entry_price,exit_price,quantity,position_type,net_pnl,profit_pct,exit_reason,holding_minutes,max_profit_seen,exit_level,hard_stop_915,confluence_trade,oi_signal_pattern,hybrid_signal_type,entry_reason
+BPCL,2026-03-10T10:45:02.819116,2026-03-10T11:39:28.244467,327.0,325.8,152,SHORT,182.39999999999827,0.3669724770642167,PROFIT_TRAILING_STOP_5MIN,54,0.5963302752293543,325.55,342.2,True,BEARISH,BEARISH,UNKNOWN
