@@ -1,31 +1,62 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
     TrendingUp, TrendingDown, Activity, IndianRupee,
-    ChevronDown, ChevronUp, RefreshCw, BarChart3
+    ChevronDown, ChevronUp, RefreshCw, BarChart3,
+    ArrowUpRight, ArrowDownRight, Target, Calendar,
+    AlertCircle
 } from 'lucide-react';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 const STARTING_CAPITAL = 50000;
 
-const fmt = (n) => new Intl.NumberFormat('en-IN', { maximumFractionDigits: 2 }).format(n);
-const fmtCur = (n) => '₹' + fmt(Math.abs(n));
-const fmtTime = (s) => {
-    if (!s) return '—';
-    const d = s.includes('T') ? new Date(s) : new Date(s.replace(' ', 'T'));
-    return isNaN(d) ? s : d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-};
-const fmtDate = (s) => {
-    if (!s) return '—';
-    const d = s.includes('T') ? new Date(s) : new Date(s.replace(' ', 'T'));
-    return isNaN(d) ? s : d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+/* ── Helper Functions ── */
+const formatDate = (dateStr) => {
+    if (!dateStr || dateStr === 'ALL') return 'Overall';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+    });
 };
 
-/* ── Bar Loader Component ── */
+const formatTime = (timestamp) => {
+    try {
+        if (!timestamp) return 'N/A';
+        const d = timestamp.includes(' ') ? new Date(timestamp.replace(' ', 'T')) : new Date(timestamp);
+        if (isNaN(d.getTime())) return timestamp;
+        const hours = d.getHours();
+        const minutes = d.getMinutes();
+        const period = hours >= 12 ? 'pm' : 'am';
+        const displayHour = hours % 12 || 12;
+        return `${displayHour}:${minutes.toString().padStart(2, '0')} ${period}`;
+    } catch (e) { return timestamp; }
+};
+
+const formatPnL = (val) => {
+    const absVal = Math.abs(val);
+    const formatted = new Intl.NumberFormat('en-IN', {
+        style: 'currency',
+        currency: 'INR',
+        maximumFractionDigits: 0
+    }).format(absVal);
+    return val >= 0 ? `+${formatted}` : `-${formatted}`;
+};
+
+const formatCurRaw = (val) => {
+    return new Intl.NumberFormat('en-IN', {
+        style: 'currency',
+        currency: 'INR',
+        maximumFractionDigits: 0
+    }).format(val);
+};
+
+/* ── Loader Component ── */
 const BarLoader = () => (
-    <div className="min-h-[60vh] flex items-center justify-center">
+    <div className="min-h-screen flex items-center justify-center" style={{ background: '#eaf4f7' }}>
         <div className="text-center">
             <div className="mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 100" width="160" height="133" style={{ display: 'block', margin: '0 auto' }}>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 100" width="200" height="166" style={{ display: 'block', margin: '0 auto' }}>
                     <rect x="12" y="60" width="10" height="40" fill="#034C8C" rx="1">
                         <animate attributeName="height" values="40;70;40" dur="1s" begin="0s" repeatCount="indefinite" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1" />
                         <animate attributeName="y" values="60;30;60" dur="1s" begin="0s" repeatCount="indefinite" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1" />
@@ -49,188 +80,14 @@ const BarLoader = () => (
     </div>
 );
 
-/* ── Stat Card ── */
-const StatCard = ({ label, value, sub, color = '#1F62C7', icon: Icon }) => (
-    <div className="rounded-2xl p-5 flex flex-col gap-1"
-        style={{ background: 'white', boxShadow: '0 4px 16px rgba(0,0,0,0.08)' }}>
-        <div className="flex items-center gap-2 mb-1">
-            {Icon && <Icon size={16} color={color} />}
-            <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">{label}</span>
-        </div>
-        <span className="text-2xl font-bold" style={{ color }}>{value}</span>
-        {sub && <span className="text-xs text-gray-400">{sub}</span>}
-    </div>
-);
-
-/* ── Version Panel ── */
-const VersionPanel = ({ version, data, accentColor, accentLight }) => {
-    const [expanded, setExpanded] = useState(true);
-    const [filterDate, setFilterDate] = useState('ALL');
-
-    const { trades = [], stats = {} } = data;
-    const dates = useMemo(() => [...new Set(trades.map(t => t.date))].filter(Boolean).sort().reverse(), [trades]);
-    const filtered = useMemo(() =>
-        filterDate === 'ALL' ? trades : trades.filter(t => t.date === filterDate),
-        [trades, filterDate]
-    );
-
-    const totalReturn = stats.currentCapital
-        ? ((stats.currentCapital - STARTING_CAPITAL) / STARTING_CAPITAL * 100).toFixed(2)
-        : '0.00';
-
-    return (
-        <div className="rounded-3xl overflow-hidden shadow-xl mb-8"
-            style={{ background: 'white' }}>
-
-            {/* Panel header */}
-            <div className="p-6 flex justify-between items-center cursor-pointer"
-                style={{ background: `linear-gradient(135deg, ${accentColor} 0%, #1F62C7 100%)` }}
-                onClick={() => setExpanded(e => !e)}>
-                <div className="flex items-center gap-3">
-                    <Activity size={24} className="text-white" />
-                    <div>
-                        <h2 className="text-2xl font-bold text-white">G Blast Live — {version}</h2>
-                        <p className="text-white/70 text-sm">
-                            {version === 'V1' ? 'Hybrid Live Trades' : 'Kite Live Trades'} · Starting ₹50,000
-                        </p>
-                    </div>
-                </div>
-                {expanded ? <ChevronUp className="text-white" /> : <ChevronDown className="text-white" />}
-            </div>
-
-            {expanded && (
-                <div className="p-6">
-                    {/* Stats row */}
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-                        <StatCard label="Trades" value={stats.totalTrades || 0} icon={BarChart3} color={accentColor} />
-                        <StatCard label="Win Rate" value={`${stats.winRate ?? 0}%`}
-                            icon={TrendingUp} color={stats.winRate >= 50 ? '#16a34a' : '#dc2626'} />
-                        <StatCard label="Total P&L"
-                            value={(stats.totalPnL >= 0 ? '+' : '') + fmtCur(stats.totalPnL || 0)}
-                            icon={stats.totalPnL >= 0 ? TrendingUp : TrendingDown}
-                            color={stats.totalPnL >= 0 ? '#16a34a' : '#dc2626'} />
-                        <StatCard label="Current Capital"
-                            value={fmtCur(stats.currentCapital || STARTING_CAPITAL)}
-                            icon={IndianRupee} color={accentColor} />
-                        <StatCard label="Overall Return"
-                            value={`${totalReturn}%`}
-                            sub={`from ₹50,000`}
-                            color={parseFloat(totalReturn) >= 0 ? '#16a34a' : '#dc2626'} />
-                    </div>
-
-                    {/* Date filter with Calendar */}
-                    <div className="flex items-center gap-4 mb-5">
-                        <div className="flex items-center gap-2">
-                            <span className="text-sm font-semibold text-gray-500">Filter by date:</span>
-                            <div className="relative flex items-center">
-                                <input
-                                    type="date"
-                                    className="border rounded-lg pl-3 pr-2 py-2 text-sm font-semibold outline-none transition-all focus:ring-2"
-                                    style={{ borderColor: accentColor, color: accentColor }}
-                                    value={filterDate === 'ALL' ? '' : filterDate}
-                                    onChange={e => setFilterDate(e.target.value || 'ALL')}
-                                />
-                                {filterDate !== 'ALL' && (
-                                    <button
-                                        onClick={() => setFilterDate('ALL')}
-                                        className="ml-2 text-xs font-bold hover:underline"
-                                        style={{ color: accentColor }}>
-                                        Clear
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Dropdown fallback for quick selection */}
-                        <div className="h-6 w-px bg-gray-200 mx-2"></div>
-
-                        <select
-                            className="border rounded-lg px-3 py-2 text-sm font-semibold bg-transparent outline-none"
-                            style={{ borderColor: accentColor, color: accentColor }}
-                            value={filterDate}
-                            onChange={e => setFilterDate(e.target.value)}>
-                            <option value="ALL">All Dates</option>
-                            {dates.map(d => <option key={d} value={d}>{d}</option>)}
-                        </select>
-                        <span className="text-xs text-gray-400">{filtered.length} trade{filtered.length !== 1 ? 's' : ''}</span>
-                    </div>
-
-                    {/* Trades table */}
-                    {filtered.length === 0 ? (
-                        <div className="text-center text-gray-400 py-12">No trades found for this date.</div>
-                    ) : (
-                        <div className="overflow-x-auto rounded-2xl" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
-                            <table className="w-full text-sm">
-                                <thead>
-                                    <tr style={{ background: accentLight }}>
-                                        {['#', 'Date', 'Symbol', 'Dir', 'Entry ₹', 'Exit ₹', 'P&L', 'Return%', 'Capital', 'Reason'].map(h => (
-                                            <th key={h} className="px-4 py-3 text-left font-bold text-xs uppercase tracking-wide"
-                                                style={{ color: accentColor }}>{h}</th>
-                                        ))}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {filtered.map((t, i) => {
-                                        const isWin = t.total_pnl > 0;
-                                        return (
-                                            <tr key={i}
-                                                className="border-b border-gray-50 hover:bg-gray-50 transition-colors"
-                                                style={{ background: i % 2 === 0 ? 'white' : '#fafbff' }}>
-                                                <td className="px-4 py-3 font-bold text-gray-400">{t.trade_no}</td>
-                                                <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
-                                                    <div>{fmtDate(t.entry_time)}</div>
-                                                    <div className="text-xs text-gray-400">{fmtTime(t.entry_time)}</div>
-                                                </td>
-                                                <td className="px-4 py-3 font-semibold text-gray-800 max-w-[140px] truncate"
-                                                    title={t.symbol}>{t.symbol}</td>
-                                                <td className="px-4 py-3">
-                                                    <span className={`px-2 py-0.5 rounded-full text-xs font-bold
-                            ${t.direction === 'PUT' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
-                                                        {t.direction}
-                                                    </span>
-                                                </td>
-                                                <td className="px-4 py-3 text-gray-700 font-mono">{fmt(t.entry_price)}</td>
-                                                <td className="px-4 py-3 text-gray-700 font-mono">{fmt(t.exit_price)}</td>
-                                                <td className="px-4 py-3 font-bold font-mono"
-                                                    style={{ color: isWin ? '#16a34a' : '#dc2626' }}>
-                                                    {isWin ? '+' : ''}{fmtCur(t.total_pnl)}
-                                                </td>
-                                                <td className="px-4 py-3 font-bold text-xs"
-                                                    style={{ color: isWin ? '#16a34a' : '#dc2626' }}>
-                                                    {isWin ? '+' : ''}{t.return_pct}%
-                                                </td>
-                                                <td className="px-4 py-3 text-gray-700 font-mono text-xs">
-                                                    <div className="text-gray-400 text-[10px]">{fmtCur(t.starting_capital)}</div>
-                                                    <div className="font-bold" style={{ color: accentColor }}>{fmtCur(t.ending_capital)}</div>
-                                                </td>
-                                                <td className="px-4 py-3">
-                                                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold
-                            ${t.exit_reason === 'TARGET' || t.exit_reason === 'TARGET_HIT'
-                                                            ? 'bg-green-100 text-green-700'
-                                                            : t.exit_reason === 'STOP_LOSS'
-                                                                ? 'bg-red-100 text-red-700'
-                                                                : 'bg-gray-100 text-gray-600'}`}>
-                                                        {t.exit_reason || '—'}
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
-                </div>
-            )}
-        </div>
-    );
-};
-
-/* ── Main LivePage ── */
+/* ── Main Component ── */
 const LivePage = () => {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [activeVersion, setActiveVersion] = useState('ALL'); // 'ALL', 'V1', 'V2'
+    const [selectedDate, setSelectedDate] = useState('ALL');
+    const [logoError, setLogoError] = useState(false);
 
     const fetchData = async () => {
         setLoading(true);
@@ -249,88 +106,341 @@ const LivePage = () => {
 
     useEffect(() => { fetchData(); }, []);
 
-    // Combined portfolio summary
-    const combined = useMemo(() => {
-        if (!data) return null;
-        const v1 = data.v1.stats;
-        const v2 = data.v2.stats;
-        const totalPnL = (v1.totalPnL || 0) + (v2.totalPnL || 0);
-        const totalCapital = (v1.currentCapital || STARTING_CAPITAL) + (v2.currentCapital || STARTING_CAPITAL);
+    // Get current trades based on active version
+    const activeTrades = useMemo(() => {
+        if (!data) return [];
+        if (activeVersion === 'V1') return data.v1.trades;
+        if (activeVersion === 'V2') return data.v2.trades;
+        // ALL: Combine and sort by entry_time descending
+        return [...data.v1.trades, ...data.v2.trades].sort((a, b) => new Date(b.entry_time) - new Date(a.entry_time));
+    }, [data, activeVersion]);
+
+    // Available dates for selected version
+    const availableDates = useMemo(() => {
+        const dates = [...new Set(activeTrades.map(t => t.date))].filter(Boolean);
+        return dates.sort((a, b) => new Date(b) - new Date(a));
+    }, [activeTrades]);
+
+    // Filtered trades by date
+    const filteredTrades = useMemo(() => {
+        if (selectedDate === 'ALL') return activeTrades;
+        return activeTrades.filter(t => t.date === selectedDate);
+    }, [activeTrades, selectedDate]);
+
+    // Calculate stats for current selection
+    const currentStats = useMemo(() => {
+        if (filteredTrades.length === 0) {
+            return {
+                totalTrades: 0, totalPnL: 0, winners: 0, losers: 0, winRate: 0,
+                avgProfit: 0, avgLoss: 0, avgPnL: 0, capital: activeVersion === 'ALL' ? 100000 : 50000
+            };
+        }
+
+        const totalPnL = filteredTrades.reduce((s, t) => s + (t.total_pnl || 0), 0);
+        const winners = filteredTrades.filter(t => t.total_pnl > 0);
+        const losers = filteredTrades.filter(t => t.total_pnl < 0);
+        const winRate = (winners.length / filteredTrades.length) * 100;
+
+        const avgProfit = winners.length > 0 ? winners.reduce((s, t) => s + t.total_pnl, 0) / winners.length : 0;
+        const avgLoss = losers.length > 0 ? losers.reduce((s, t) => s + t.total_pnl, 0) / losers.length : 0;
+
+        // Final capital for the latest trade in selection
+        // Actually, if filtered, it's safer to use the base stats or re-calculate
+        let capital = 0;
+        if (activeVersion === 'ALL') {
+            const v1End = data.v1.trades[data.v1.trades.length - 1]?.ending_capital || 50000;
+            const v2End = data.v2.trades[data.v2.trades.length - 1]?.ending_capital || 50000;
+            capital = v1End + v2End;
+        } else {
+            const versionTrades = activeVersion === 'V1' ? data.v1.trades : data.v2.trades;
+            capital = versionTrades[versionTrades.length - 1]?.ending_capital || 50000;
+        }
+
         return {
+            totalTrades: filteredTrades.length,
             totalPnL,
-            totalCapital,
-            overallReturn: ((totalCapital - 100000) / 100000 * 100).toFixed(2),
+            winners: winners.length,
+            losers: losers.length,
+            winRate,
+            avgProfit,
+            avgLoss,
+            avgPnL: totalPnL / filteredTrades.length,
+            capital
         };
-    }, [data]);
+    }, [filteredTrades, activeVersion, data]);
 
     if (loading && !data) return <BarLoader />;
 
-    return (
-        <div style={{ background: '#eaf4f7', minHeight: '100vh', padding: '24px', zoom: 0.9 }}>
-            {/* Page header */}
-            <div className="flex justify-between items-center mb-8">
-                <div>
-                    <h1 className="text-4xl font-bold mb-1"
-                        style={{
-                            background: 'linear-gradient(135deg, #1FA8A6, #1F62C7)',
-                            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-                            fontFamily: '"Montserrat", sans-serif'
-                        }}>
-                        G Blast Live
-                    </h1>
-                    <p className="text-gray-500 text-sm">Live trades · Sequential compounding · ₹50K per version</p>
-                </div>
-                <div className="flex items-center gap-4">
-                    {combined && (
-                        <div className="rounded-2xl px-6 py-3 text-right"
-                            style={{ background: 'white', boxShadow: '0 4px 16px rgba(0,0,0,0.08)' }}>
-                            <div className="text-xs text-gray-400 uppercase tracking-wide">Portfolio (₹1L)</div>
-                            <div className="text-xl font-bold"
-                                style={{ color: combined.totalPnL >= 0 ? '#16a34a' : '#dc2626' }}>
-                                {combined.totalPnL >= 0 ? '+' : ''}{fmtCur(combined.totalPnL)}
-                                <span className="text-sm ml-2">({combined.overallReturn}%)</span>
-                            </div>
-                            <div className="text-xs text-gray-500">Current: ₹{fmt(combined.totalCapital)}</div>
-                        </div>
-                    )}
-                    <button onClick={fetchData} disabled={loading}
-                        className="flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-white transition-all transform hover:scale-105"
-                        style={{ background: 'linear-gradient(135deg, #1FA8A6, #1F62C7)' }}>
-                        <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
-                        Refresh
+    if (error && !data) {
+        return (
+            <div className="min-h-screen flex items-center justify-center" style={{ background: '#eaf4f7' }}>
+                <div className="bg-white rounded-2xl p-8 shadow-xl max-w-md">
+                    <AlertCircle className="text-red-500 mx-auto mb-4" size={48} />
+                    <h2 className="text-2xl font-bold text-red-600 mb-2">Connection Error</h2>
+                    <p className="text-gray-600 mb-4">{error}</p>
+                    <button onClick={fetchData} className="w-full py-3 rounded-lg font-bold text-white transition-all shadow-lg"
+                        style={{ background: 'linear-gradient(135deg, rgb(31, 168, 166) 0%, rgb(23, 98, 199) 100%)' }}>
+                        Retry Connection
                     </button>
                 </div>
             </div>
+        );
+    }
 
-            {loading && (
-                <div className="text-center py-24 text-gray-400 text-xl font-semibold">
-                    <RefreshCw size={40} className="animate-spin mx-auto mb-4" />
-                    Loading live trades…
+    return (
+        <div className="min-h-screen p-6" style={{ background: '#eaf4f7', zoom: 0.9 }}>
+            {/* Header */}
+            <div className="mb-8 flex justify-between items-start">
+                <div className="flex items-center gap-6">
+                    <div className="h-16 w-16 rounded-xl flex items-center justify-center shadow-lg"
+                        style={{ background: 'linear-gradient(135deg, #1762C7 0%, #1FA8A6 100%)' }}>
+                        <Activity className="text-white" size={32} />
+                    </div>
+                    <div>
+                        <h1 className="text-5xl font-bold mb-2" style={{
+                            background: 'linear-gradient(135deg, #1762C7 0%, #1FA8A6 100%)',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            backgroundClip: 'text',
+                            fontFamily: '"Montserrat", sans-serif'
+                        }}>
+                            G Blast Live
+                        </h1>
+                        <p className="text-gray-500 font-semibold tracking-widest text-sm uppercase">
+                            Sequential Compounding Portfolio · ₹1 Lakh Initial
+                        </p>
+                    </div>
+                </div>
+
+                <button
+                    onClick={fetchData}
+                    disabled={loading}
+                    className="px-6 py-3 rounded-xl font-bold text-white transition-all transform hover:scale-105 flex items-center gap-2 shadow-lg"
+                    style={{ background: 'linear-gradient(135deg, rgb(31, 168, 166) 0%, rgb(23, 98, 199) 100%)' }}
+                >
+                    <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
+                    Refresh
+                </button>
+            </div>
+
+            {/* Version Tabs */}
+            <div className="flex gap-3 mb-8 flex-wrap">
+                {[
+                    { id: 'ALL', label: 'All Live', subtitle: 'V1 + V2' },
+                    { id: 'V1', label: 'V1 Hybrid', subtitle: 'Live' },
+                    { id: 'V2', label: 'V2 Kite', subtitle: 'Live' }
+                ].map((v) => (
+                    <button
+                        key={v.id}
+                        onClick={() => { setActiveVersion(v.id); setSelectedDate('ALL'); }}
+                        className="px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 transform hover:scale-105 hover:shadow-2xl"
+                        style={{
+                            background: activeVersion === v.id
+                                ? 'linear-gradient(135deg, rgb(31, 168, 166) 0%, rgb(23, 98, 199) 100%)'
+                                : 'white',
+                            color: activeVersion === v.id ? 'white' : '#1762C7',
+                            boxShadow: activeVersion === v.id
+                                ? '0 8px 25px rgba(31, 168, 166, 0.4)'
+                                : '0 4px 12px rgba(0,0,0,0.1)'
+                        }}
+                    >
+                        <div className="flex items-center gap-2">
+                            <span>{v.label}</span>
+                            <span className="text-sm font-normal opacity-90">({v.subtitle})</span>
+                        </div>
+                    </button>
+                ))}
+            </div>
+
+            {/* Date Filter Banner */}
+            {selectedDate !== 'ALL' && (
+                <div className="mb-4 px-6 py-3 rounded-xl flex items-center gap-3"
+                    style={{ background: 'linear-gradient(135deg, rgba(31, 168, 166, 0.1) 0%, rgba(23, 98, 199, 0.1) 100%)', border: '2px solid rgba(23, 98, 199, 0.3)' }}>
+                    <Calendar size={20} style={{ color: '#1762C7' }} />
+                    <span className="font-semibold" style={{ color: '#1762C7' }}>
+                        Statistics filtered for: {formatDate(selectedDate)}
+                    </span>
+                    <button
+                        onClick={() => setSelectedDate('ALL')}
+                        className="ml-auto px-4 py-1 rounded-lg text-white font-semibold text-sm transition-all transform hover:scale-105"
+                        style={{ background: 'linear-gradient(135deg, rgb(31, 168, 166) 0%, rgb(23, 98, 199) 100%)' }}
+                    >
+                        Show Overall Stats
+                    </button>
                 </div>
             )}
 
-            {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 rounded-2xl p-6 text-center font-semibold">
-                    ⚠️ {error}
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                {/* Total Trades */}
+                <div className="bg-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="p-3 rounded-xl" style={{ background: 'linear-gradient(135deg, #1762C7 0%, #1FA8A6 100%)' }}>
+                            <BarChart3 className="text-white" size={28} />
+                        </div>
+                        <Activity className="text-gray-400" size={24} />
+                    </div>
+                    <h3 className="text-gray-500 text-sm font-semibold mb-2 uppercase tracking-wide">Total Trades</h3>
+                    <p className="text-4xl font-bold mb-2" style={{ color: '#1762C7' }}>{currentStats.totalTrades}</p>
+                    <div className="flex gap-3 text-xs mt-3">
+                        <span className="text-emerald-600 font-bold">✓ {currentStats.winners}</span>
+                        <span className="text-red-600 font-bold">✗ {currentStats.losers}</span>
+                        <span className="text-gray-400 font-bold">⊗ 0</span>
+                    </div>
                 </div>
-            )}
 
-            {data && !loading && (
-                <>
-                    <VersionPanel
-                        version="V1"
-                        data={data.v1}
-                        accentColor="#1FA8A6"
-                        accentLight="#edfafa"
-                    />
-                    <VersionPanel
-                        version="V2"
-                        data={data.v2}
-                        accentColor="#1F62C7"
-                        accentLight="#eff4ff"
-                    />
-                </>
-            )}
+                {/* Net P&L */}
+                <div className="bg-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+                    <div className="flex items-center justify-between mb-4">
+                        <div className={`p-3 rounded-xl ${currentStats.totalPnL >= 0 ? 'bg-emerald-500' : 'bg-red-500'}`}>
+                            <IndianRupee className="text-white" size={28} />
+                        </div>
+                        {currentStats.totalPnL >= 0 ?
+                            <ArrowUpRight className="text-emerald-500" size={28} /> :
+                            <ArrowDownRight className="text-red-500" size={28} />
+                        }
+                    </div>
+                    <h3 className="text-gray-500 text-sm font-semibold mb-2 uppercase tracking-wide">Net P&L</h3>
+                    <p className={`text-4xl font-bold mb-2 ${currentStats.totalPnL >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                        {formatPnL(currentStats.totalPnL)}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-3">
+                        Avg per trade: <span className={`font-semibold ${currentStats.avgPnL >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                            {formatPnL(currentStats.avgPnL)}
+                        </span>
+                    </p>
+                </div>
+
+                {/* Win Rate */}
+                <div className="bg-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="p-3 rounded-xl" style={{ background: 'linear-gradient(135deg, #1762C7 0%, #1FA8A6 100%)' }}>
+                            <Target className="text-white" size={28} />
+                        </div>
+                        <div className="text-right">
+                            <div className="w-16 h-16 rounded-full border-4 flex items-center justify-center" style={{ borderColor: '#1762C7' }}>
+                                <span className="text-lg font-bold" style={{ color: '#1762C7' }}>
+                                    {currentStats.winRate.toFixed(0)}%
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <h3 className="text-gray-500 text-sm font-semibold mb-2 uppercase tracking-wide">Win Rate</h3>
+                    <p className="text-4xl font-bold" style={{ color: '#1762C7' }}>
+                        {currentStats.winRate.toFixed(1)}%
+                    </p>
+                </div>
+
+                {/* Current Capital */}
+                <div className="bg-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="p-3 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700">
+                            <TrendingUp className="text-white" size={28} />
+                        </div>
+                        <span className={`text-xs font-bold px-2 py-1 rounded-lg ${currentStats.totalPnL >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                            {((currentStats.capital / (activeVersion === 'ALL' ? 100000 : 50000) - 1) * 100).toFixed(1)}% Return
+                        </span>
+                    </div>
+                    <h3 className="text-gray-500 text-sm font-semibold mb-2 uppercase tracking-wide">Current Capital</h3>
+                    <p className="text-4xl font-bold text-gray-800">{formatCurRaw(currentStats.capital)}</p>
+                    <p className="text-xs text-gray-500 mt-3">
+                        Initial: {formatCurRaw(activeVersion === 'ALL' ? 100000 : 50000)}
+                    </p>
+                </div>
+            </div>
+
+            {/* Date Selection Dropdown */}
+            <div className="mb-8 flex items-center gap-4 bg-white p-4 rounded-2xl shadow-sm">
+                <div className="flex items-center gap-2 px-4 border-r border-gray-100">
+                    <Calendar size={20} className="text-gray-400" />
+                    <span className="font-bold text-gray-700">Filter by Date</span>
+                </div>
+                <select
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    className="flex-1 bg-transparent outline-none font-semibold text-gray-600"
+                >
+                    <option value="ALL">All Available Dates</option>
+                    {availableDates.map(date => (
+                        <option key={date} value={date}>{formatDate(date)}</option>
+                    ))}
+                </select>
+                <div className="text-sm text-gray-400 font-medium px-4">
+                    {filteredTrades.length} Trades Found
+                </div>
+            </div>
+
+            {/* Trades Table */}
+            <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                        <thead>
+                            <tr style={{ background: 'linear-gradient(135deg, #f8faff 0%, #eef2ff 100%)' }}>
+                                {[
+                                    { k: 'trade_no', l: '#' },
+                                    { k: 'date', l: 'Time' },
+                                    { k: 'symbol', l: 'Instrument' },
+                                    { k: 'direction', l: 'Dir' },
+                                    { k: 'entry_price', l: 'Entry' },
+                                    { k: 'exit_price', l: 'Exit' },
+                                    { k: 'total_pnl', l: 'P&L' },
+                                    { k: 'capital', l: 'Running Capital' },
+                                    { k: 'return_pct', l: 'Ret%' },
+                                    { k: 'exit_reason', l: 'Outcome' }
+                                ].map(h => (
+                                    <th key={h.k} className="px-6 py-5 text-sm font-bold uppercase tracking-wider text-gray-500">
+                                        {h.l}
+                                    </th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {filteredTrades.map((t, i) => {
+                                const isWin = (t.total_pnl || 0) > 0;
+                                return (
+                                    <tr key={i} className="border-b border-gray-50 hover:bg-blue-50/30 transition-colors">
+                                        <td className="px-6 py-4 font-bold text-gray-400">{t.trade_no || i + 1}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="font-bold text-gray-700">{formatDate(t.date)}</div>
+                                            <div className="text-[10px] text-gray-400 uppercase font-bold">{formatTime(t.entry_time)}</div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="font-black text-gray-800">{t.symbol}</div>
+                                            {activeVersion === 'ALL' && <div className="text-[10px] font-bold text-blue-500 uppercase">{t.version}</div>}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <span className={`px-3 py-1 rounded-lg text-[10px] font-black tracking-widest ${t.direction === 'CALL' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
+                                                }`}>
+                                                {t.direction} {t.option_type}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 font-bold text-gray-600">₹{t.entry_price.toFixed(2)}</td>
+                                        <td className="px-6 py-4 font-bold text-gray-600">₹{t.exit_price.toFixed(2)}</td>
+                                        <td className={`px-6 py-4 font-black ${isWin ? 'text-emerald-600' : 'text-red-500'}`}>
+                                            {formatPnL(t.total_pnl)}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="text-gray-400 text-[10px] font-bold">START: {formatCurRaw(t.starting_capital)}</div>
+                                            <div className="font-black text-blue-600">{formatCurRaw(t.ending_capital)}</div>
+                                        </td>
+                                        <td className={`px-6 py-4 font-black text-xs ${isWin ? 'text-emerald-500' : 'text-red-500'}`}>
+                                            {isWin ? '+' : ''}{t.return_pct}%
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <span className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${t.exit_reason?.includes('TARGET') ? 'bg-emerald-50 text-emerald-600' :
+                                                    t.exit_reason?.includes('STOP') ? 'bg-red-50 text-red-600' :
+                                                        'bg-gray-100 text-gray-500'
+                                                }`}>
+                                                {t.exit_reason || '—'}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     );
 };

@@ -456,8 +456,7 @@ const TradingDashboard = () => {
         {[
           'ALL', 'iTrack', 'TrendFlo',
           'GBlast', 'GBlastV2', 'GBlastV2_Upgrade', 'GBlastV3',
-          'Blaze', 'BlazeV2', 'BlazeV3', 'BlazeV4', 'BlazeV4_2',
-          'GBLAST_LIVE'
+          'Blaze', 'BlazeV2', 'BlazeV3', 'BlazeV4', 'BlazeV4_2'
         ].map((strategy) => {
           const display = strategy !== 'ALL' ? getStrategyDisplay(strategy) : null;
           return (
