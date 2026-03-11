@@ -255,7 +255,7 @@ function normalizeTrade(row, filename) {
       strategy = filename.includes('hybrid') ? 'V1_LIVE_HYBRID' : 'V1_LIVE_KITE';
     } else if (filename.includes('LIVE - V2')) {
       strategy = filename.includes('hybrid') ? 'V2_LIVE_HYBRID' : 'V2_LIVE_KITE';
-    } else if (filename.includes('G - Blast - Paper (Upgrade 2.0)')) {
+    } else if (filenameLower.includes('g - blast - paper (upgrade 2.0)')) {
       strategy = 'GBlastV2_Upgrade';
     } else if (tradeType === 'version_3') {
       strategy = 'GBlastV3';
