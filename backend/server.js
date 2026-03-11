@@ -617,6 +617,7 @@ app.get('/api/trades', async (req, res) => {
       TrendFlo: calculateStats(trades.filter(t => t.strategy === 'TrendFlo')),
       GBlast: calculateStats(trades.filter(t => t.strategy === 'GBlast')),
       GBlastV2: calculateStats(trades.filter(t => t.strategy === 'GBlastV2')),
+      GBlastV2_Upgrade: calculateStats(trades.filter(t => t.strategy === 'GBlastV2_Upgrade')),
       GBlastV3: calculateStats(trades.filter(t => t.strategy === 'GBlastV3')),
       Blaze: calculateStats(trades.filter(t => t.strategy === 'Blaze')),
       BlazeV2: calculateStats(trades.filter(t => t.strategy === 'BlazeV2')),
