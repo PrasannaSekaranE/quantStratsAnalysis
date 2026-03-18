@@ -1,0 +1,2 @@
+symbol,entry_time,exit_time,entry_price,exit_price,quantity,position_type,net_pnl,profit_pct,exit_reason,holding_minutes,max_profit_seen,exit_level,hard_stop_915,confluence_trade,oi_signal_pattern,hybrid_signal_type,entry_reason
+OBEROIRLTY,2026-03-16T10:20:57.299581,2026-03-16T11:08:20.631413,1432.8,1406.4,34,SHORT,897.5999999999954,1.8425460636515818,PROFIT_TRAILING_STOP_5MIN,47,2.331099944165261,1405.1,1464.1,True,BEARISH,BEARISH,UNKNOWN
