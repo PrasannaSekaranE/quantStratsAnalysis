@@ -189,6 +189,14 @@ const LivePage = () => {
             capital = versionTrades[versionTrades.length - 1]?.ending_capital || data[versionKey].startingCapital;
         }
 
+        let initialCapital = 0;
+        if (activeVersion === 'ALL') {
+            initialCapital = (data.summary?.startingCapital || 100000) + (data.summary?.v2UpgradeCapital || 0);
+        } else {
+            const versionKey = activeVersion === 'V1' ? 'v1' : activeVersion === 'V1_1' ? 'v1_1' : 'v2_upgrade';
+            initialCapital = data[versionKey].startingCapital || 50000;
+        }
+
         return {
             totalTrades: processedTrades.length,
             totalPnL,
@@ -198,7 +206,8 @@ const LivePage = () => {
             avgProfit,
             avgLoss,
             avgPnL: totalPnL / processedTrades.length,
-            capital
+            capital,
+            initialCapital
         };
     }, [processedTrades, activeVersion, data]);
 
@@ -372,13 +381,13 @@ const LivePage = () => {
                             <TrendingUp className="text-white" size={28} />
                         </div>
                         <span className={`text-xs font-bold px-2 py-1 rounded-lg ${currentStats.totalPnL >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
-                            {((currentStats.capital / (activeVersion === 'ALL' ? 100000 : 50000) - 1) * 100).toFixed(1)}% Return
+                            {(currentStats.totalPnL / currentStats.initialCapital * 100).toFixed(1)}% Return
                         </span>
                     </div>
                     <h3 className="text-gray-500 text-sm font-semibold mb-2 uppercase tracking-wide">Current Capital</h3>
                     <p className="text-4xl font-bold text-gray-800">{formatCurRaw(currentStats.capital)}</p>
                     <p className="text-xs text-gray-500 mt-3">
-                        Initial: {formatCurRaw(activeVersion === 'ALL' ? 100000 : 50000)}
+                        Initial: {formatCurRaw(currentStats.initialCapital)}
                     </p>
                 </div>
             </div>
