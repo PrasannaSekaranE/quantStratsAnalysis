@@ -111,8 +111,8 @@ const LivePage = () => {
         if (activeVersion === 'V1') return data.v1.trades;
         if (activeVersion === 'V1_1') return data.v1_1.trades;
         if (activeVersion === 'V2_UPGRADE') return data.v2_upgrade.trades;
-        // ALL: Combine
-        return [...data.v1.trades, ...data.v1_1.trades, ...data.v2_upgrade.trades];
+        // ALL: Combine only active versions (V1 + V2 Upgrade) for 1 Lakh total
+        return [...data.v1.trades, ...data.v2_upgrade.trades];
     }, [data, activeVersion]);
 
     // Handle Sorting
@@ -180,9 +180,8 @@ const LivePage = () => {
         let capital = 0;
         if (activeVersion === 'ALL') {
             const v1End = data.v1.trades[data.v1.trades.length - 1]?.ending_capital || data.v1.startingCapital;
-            const v11End = data.v1_1.trades[data.v1_1.trades.length - 1]?.ending_capital || data.v1_1.startingCapital;
             const v2UpEnd = data.v2_upgrade.trades[data.v2_upgrade.trades.length - 1]?.ending_capital || data.v2_upgrade.startingCapital;
-            capital = v1End + v11End + v2UpEnd;
+            capital = v1End + v2UpEnd;
         } else {
             const versionKey = activeVersion === 'V1' ? 'v1' : activeVersion === 'V1_1' ? 'v1_1' : 'v2_upgrade';
             const versionTrades = data[versionKey].trades;
@@ -191,7 +190,7 @@ const LivePage = () => {
 
         let initialCapital = 0;
         if (activeVersion === 'ALL') {
-            initialCapital = (data.summary?.startingCapital || 100000) + (data.summary?.v2UpgradeCapital || 0);
+            initialCapital = data.summary?.startingCapital || 100000; // 1 Lakh for active (V1 + V2 Upgrade)
         } else {
             const versionKey = activeVersion === 'V1' ? 'v1' : activeVersion === 'V1_1' ? 'v1_1' : 'v2_upgrade';
             initialCapital = data[versionKey].startingCapital || 50000;
@@ -249,7 +248,7 @@ const LivePage = () => {
                             G Blast Live
                         </h1>
                         <p className="text-gray-500 font-semibold tracking-widest text-sm uppercase">
-                            Sequential Compounding Portfolio · {activeVersion === 'ALL' ? '₹1.5 Lakhs' : '₹50,000'} Initial
+                            Sequential Compounding Portfolio · ₹1 Lakh Initial
                         </p>
                     </div>
                 </div>
