@@ -666,7 +666,7 @@ function parseCSVFile(filePath) {
   });
 }
 
-async function loadLiveVersion(githubSubPath, filePattern, normaliser) {
+async function loadLiveVersion(githubSubPath, filePattern, normaliser, startingCapital) {
   const localFolder = path.join(__dirname, '..', 'trades', githubSubPath);
   let files = [];
 
@@ -715,7 +715,7 @@ async function loadLiveVersion(githubSubPath, filePattern, normaliser) {
   // Sort by entry_time ascending, then apply compounding
   allRows.sort((a, b) => new Date(a.entry_time) - new Date(b.entry_time));
 
-  let capital = STARTING_CAPITAL;
+  let capital = startingCapital;
   return allRows.map((trade, idx) => {
     const entry = { ...trade, trade_no: idx + 1, starting_capital: capital };
     capital = Math.round((capital + (trade.total_pnl || 0)) * 100) / 100;
@@ -793,9 +793,9 @@ function calcLiveStats(trades, startingCapital) {
 app.get('/api/live-trades', async (req, res) => {
   try {
     const [v1Trades, v2Trades, upgradeTrades] = await Promise.all([
-      loadLiveVersion('G - BLAST - LIVE/V1', /^hybrid_trades_live_/, normaliseV1),
-      loadLiveVersion('G - BLAST - LIVE/V2', /^kite_live_trades_/, normaliseV2),
-      loadLiveVersion('G - BLAST - LIVE/V2 Upgrade', /^hybrid_trades_live_/, normaliseV1), // V2 Upgrade uses hybrid format
+      loadLiveVersion('G - BLAST - LIVE/V1', /^hybrid_trades_live_/, normaliseV1, STARTING_CAPITAL_V1),
+      loadLiveVersion('G - BLAST - LIVE/V2', /^kite_live_trades_/, normaliseV2, STARTING_CAPITAL_V1),
+      loadLiveVersion('G - BLAST - LIVE/V2 Upgrade', /^hybrid_trades_live_/, normaliseV1, V2_UPGRADE_CAPITAL),
     ]);
 
     res.json({
