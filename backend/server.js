@@ -650,7 +650,9 @@ app.get('/api/trades', async (req, res) => {
 
 // ─── G-BLAST LIVE: /api/live-trades ────────────────────────────────────────
 const LIVE_FOLDER = path.join(__dirname, '..', 'trades', 'G - BLAST - LIVE');
-const STARTING_CAPITAL = 50000; // ₹50K per version
+const INITIAL_CAPITAL = 100000; // Total ₹1 Lakh for V1/V1.1
+const V2_UPGRADE_CAPITAL = 5000000; // ₹50 Lakhs for V2 Upgrade
+const STARTING_CAPITAL_V1 = 50000; // ₹50K per sub-version of V1
 
 function parseCSVFile(filePath) {
   return new Promise((resolve, reject) => {
@@ -767,8 +769,14 @@ function normaliseV2(row) {
   };
 }
 
-function calcLiveStats(trades) {
-  if (!trades.length) return { totalTrades: 0, totalPnL: 0, winRate: 0, currentCapital: STARTING_CAPITAL };
+function calcLiveStats(trades, startingCapital) {
+  if (!trades.length) return {
+    totalTrades: 0,
+    totalPnL: 0,
+    winRate: 0,
+    currentCapital: startingCapital,
+    overallReturn: 0
+  };
   const winners = trades.filter(t => t.total_pnl > 0);
   const totalPnL = trades.reduce((s, t) => s + t.total_pnl, 0);
   return {
@@ -777,23 +785,44 @@ function calcLiveStats(trades) {
     winners: winners.length,
     losers: trades.filter(t => t.total_pnl < 0).length,
     winRate: Math.round((winners.length / trades.length) * 10000) / 100,
-    currentCapital: trades[trades.length - 1]?.ending_capital ?? STARTING_CAPITAL,
-    overallReturn: Math.round(((totalPnL / STARTING_CAPITAL) * 10000)) / 100,
+    currentCapital: trades[trades.length - 1]?.ending_capital ?? (startingCapital + totalPnL),
+    overallReturn: Math.round(((totalPnL / startingCapital) * 10000)) / 100,
   };
 }
 
 app.get('/api/live-trades', async (req, res) => {
   try {
-    const [v1Trades, v2Trades] = await Promise.all([
+    const [v1Trades, v2Trades, upgradeTrades] = await Promise.all([
       loadLiveVersion('G - BLAST - LIVE/V1', /^hybrid_trades_live_/, normaliseV1),
       loadLiveVersion('G - BLAST - LIVE/V2', /^kite_live_trades_/, normaliseV2),
+      loadLiveVersion('G - BLAST - LIVE/V2 Upgrade', /^hybrid_trades_live_/, normaliseV1), // V2 Upgrade uses hybrid format
     ]);
 
     res.json({
       success: true,
-      v1: { trades: v1Trades, stats: calcLiveStats(v1Trades) },
-      v2: { trades: v2Trades, stats: calcLiveStats(v2Trades) },
-      startingCapital: STARTING_CAPITAL,
+      v1: {
+        trades: v1Trades,
+        stats: calcLiveStats(v1Trades, STARTING_CAPITAL_V1),
+        label: "V1 (40% SL)",
+        startingCapital: STARTING_CAPITAL_V1
+      },
+      v1_1: {
+        trades: v2Trades,
+        stats: calcLiveStats(v2Trades, STARTING_CAPITAL_V1),
+        label: "V1.1 (25% SL)",
+        startingCapital: STARTING_CAPITAL_V1,
+        isDiscontinued: true
+      },
+      v2_upgrade: {
+        trades: upgradeTrades,
+        stats: calcLiveStats(upgradeTrades, V2_UPGRADE_CAPITAL),
+        label: "V2 Upgrade",
+        startingCapital: V2_UPGRADE_CAPITAL
+      },
+      summary: {
+        startingCapital: INITIAL_CAPITAL,
+        v2UpgradeCapital: V2_UPGRADE_CAPITAL
+      },
       timestamp: new Date().toISOString(),
     });
   } catch (error) {

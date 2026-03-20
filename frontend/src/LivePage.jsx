@@ -84,7 +84,7 @@ const LivePage = () => {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [activeVersion, setActiveVersion] = useState('ALL'); // 'ALL', 'V1', 'V2'
+    const [activeVersion, setActiveVersion] = useState('ALL'); // 'ALL', 'V1', 'V1_1', 'V2_UPGRADE'
     const [selectedDate, setSelectedDate] = useState('ALL');
     const [sortConfig, setSortConfig] = useState({ key: 'entry_time', direction: 'desc' });
 
@@ -109,9 +109,10 @@ const LivePage = () => {
     const activeTrades = useMemo(() => {
         if (!data) return [];
         if (activeVersion === 'V1') return data.v1.trades;
-        if (activeVersion === 'V2') return data.v2.trades;
+        if (activeVersion === 'V1_1') return data.v1_1.trades;
+        if (activeVersion === 'V2_UPGRADE') return data.v2_upgrade.trades;
         // ALL: Combine
-        return [...data.v1.trades, ...data.v2.trades];
+        return [...data.v1.trades, ...data.v1_1.trades, ...data.v2_upgrade.trades];
     }, [data, activeVersion]);
 
     // Handle Sorting
@@ -178,12 +179,14 @@ const LivePage = () => {
 
         let capital = 0;
         if (activeVersion === 'ALL') {
-            const v1End = data.v1.trades[data.v1.trades.length - 1]?.ending_capital || 50000;
-            const v2End = data.v2.trades[data.v2.trades.length - 1]?.ending_capital || 50000;
-            capital = v1End + v2End;
+            const v1End = data.v1.trades[data.v1.trades.length - 1]?.ending_capital || data.v1.startingCapital;
+            const v11End = data.v1_1.trades[data.v1_1.trades.length - 1]?.ending_capital || data.v1_1.startingCapital;
+            const v2UpEnd = data.v2_upgrade.trades[data.v2_upgrade.trades.length - 1]?.ending_capital || data.v2_upgrade.startingCapital;
+            capital = v1End + v11End + v2UpEnd;
         } else {
-            const versionTrades = activeVersion === 'V1' ? data.v1.trades : data.v2.trades;
-            capital = versionTrades[versionTrades.length - 1]?.ending_capital || 50000;
+            const versionKey = activeVersion === 'V1' ? 'v1' : activeVersion === 'V1_1' ? 'v1_1' : 'v2_upgrade';
+            const versionTrades = data[versionKey].trades;
+            capital = versionTrades[versionTrades.length - 1]?.ending_capital || data[versionKey].startingCapital;
         }
 
         return {
@@ -237,7 +240,7 @@ const LivePage = () => {
                             G Blast Live
                         </h1>
                         <p className="text-gray-500 font-semibold tracking-widest text-sm uppercase">
-                            Sequential Compounding Portfolio · ₹1 Lakh Initial
+                            Sequential Compounding Portfolio · {activeVersion === 'V2_UPGRADE' ? '₹50 Lakhs' : '₹1 Lakh'} Initial
                         </p>
                     </div>
                 </div>
@@ -256,9 +259,10 @@ const LivePage = () => {
             {/* Version Tabs */}
             <div className="flex gap-3 mb-8 flex-wrap">
                 {[
-                    { id: 'ALL', label: 'All Live', subtitle: 'V1 + V2' },
-                    { id: 'V1', label: 'V1 Hybrid', subtitle: 'Live' },
-                    { id: 'V2', label: 'V2 Kite', subtitle: 'Live' }
+                    { id: 'ALL', label: 'All Live', subtitle: 'Portfolio' },
+                    { id: 'V1', label: 'V1 (40% SL)', subtitle: 'Live' },
+                    { id: 'V1_1', label: 'V1.1 (25% SL)', subtitle: 'Discontinued' },
+                    { id: 'V2_UPGRADE', label: 'V2 Upgrade', subtitle: 'Live' }
                 ].map((v) => (
                     <button
                         key={v.id}

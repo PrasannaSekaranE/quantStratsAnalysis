@@ -51,7 +51,7 @@ const TradingDashboard = () => {
     // Filter by strategy
     if (activeStrategy !== 'ALL') {
       if (activeStrategy === 'GBLAST_LIVE') {
-        const liveVersions = ['V1_LIVE_HYBRID', 'V1_LIVE_KITE', 'V2_LIVE_HYBRID', 'V2_LIVE_KITE'];
+        const liveVersions = ['V1_LIVE_HYBRID', 'V1_LIVE_KITE', 'V2_LIVE_HYBRID', 'V2_LIVE_KITE', 'V2_LIVE_UPGRADE'];
         filtered = filtered.filter(trade => liveVersions.includes(trade.strategy));
       } else {
         filtered = filtered.filter(trade => trade.strategy === activeStrategy);
@@ -231,10 +231,11 @@ const TradingDashboard = () => {
       'BlazeV3': { name: 'Blaze (V3)', subtitle: 'Paper', positionType: 'OPTIONS' },
       'BlazeV4': { name: 'Blaze (V4)', subtitle: 'Paper', positionType: 'OPTIONS' },
       'BlazeV4_2': { name: 'Blaze (V4.2)', subtitle: 'Paper', positionType: 'OPTIONS' },
-      'V1_LIVE_HYBRID': { name: 'V1 Live Hybrid', subtitle: 'Live', positionType: 'OPTIONS' },
+      'V1_LIVE_HYBRID': { name: 'V1 (40% SL)', subtitle: 'Live', positionType: 'OPTIONS' },
       'V1_LIVE_KITE': { name: 'V1 Live Kite', subtitle: 'Live', positionType: 'OPTIONS' },
       'V2_LIVE_HYBRID': { name: 'V2 Live Hybrid', subtitle: 'Live', positionType: 'OPTIONS' },
-      'V2_LIVE_KITE': { name: 'V2 Live Kite', subtitle: 'Live', positionType: 'OPTIONS' },
+      'V2_LIVE_KITE': { name: 'V1.1 (25% SL)', subtitle: 'Live (Discontinued)', positionType: 'OPTIONS' },
+      'V2_LIVE_UPGRADE': { name: 'V2 Upgrade', subtitle: 'Live', positionType: 'OPTIONS' },
       'GBLAST_LIVE': { name: 'GBLAST LIVE', subtitle: 'Live Versions', positionType: 'OPTIONS' },
       'GBlastV2_Upgrade': { name: 'G-Blast (v2 Upgrade)', subtitle: 'Paper', positionType: 'OPTIONS' }
     };
