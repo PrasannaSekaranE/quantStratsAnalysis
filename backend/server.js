@@ -650,8 +650,8 @@ app.get('/api/trades', async (req, res) => {
 
 // ─── G-BLAST LIVE: /api/live-trades ────────────────────────────────────────
 const LIVE_FOLDER = path.join(__dirname, '..', 'trades', 'G - BLAST - LIVE');
-const INITIAL_CAPITAL = 100000; // Total ₹1 Lakh for V1/V1.1
-const V2_UPGRADE_CAPITAL = 5000000; // ₹50 Lakhs for V2 Upgrade
+const INITIAL_CAPITAL = 150000; // Total ₹1.5 Lakhs for all versions
+const V2_UPGRADE_CAPITAL = 50000; // ₹50K for V2 Upgrade
 const STARTING_CAPITAL_V1 = 50000; // ₹50K per sub-version of V1
 
 function parseCSVFile(filePath) {

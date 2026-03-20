@@ -249,7 +249,7 @@ const LivePage = () => {
                             G Blast Live
                         </h1>
                         <p className="text-gray-500 font-semibold tracking-widest text-sm uppercase">
-                            Sequential Compounding Portfolio · {activeVersion === 'V2_UPGRADE' ? '₹50 Lakhs' : '₹1 Lakh'} Initial
+                            Sequential Compounding Portfolio · {activeVersion === 'ALL' ? '₹1.5 Lakhs' : '₹50,000'} Initial
                         </p>
                     </div>
                 </div>
