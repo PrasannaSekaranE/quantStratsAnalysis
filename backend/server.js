@@ -236,6 +236,8 @@ function normalizeTrade(row, filename) {
       strategy = 'BlazeV4';
     } else if (type === 'v4.2') {
       strategy = 'BlazeV4_2';
+    } else if (type === 'v5') {
+      strategy = 'BlazeV5';
     } else {
       strategy = 'Blaze';
     }
@@ -379,6 +381,7 @@ async function parseBlazeLog(filename) {
         if (filename.toUpperCase().includes('V2')) logStrategy = 'BlazeV2';
         else if (filename.toUpperCase().includes('V3')) logStrategy = 'BlazeV3';
         else if (filename.toUpperCase().includes('V4')) logStrategy = 'BlazeV4';
+        else if (filename.toUpperCase().includes('V5')) logStrategy = 'BlazeV5';
 
         currentTrade = {
           strategy: logStrategy,
