@@ -33,7 +33,7 @@ const GITHUB_BRANCH = 'main';
  */
 async function getTradeFileList() {
   const tradesDir = path.join(__dirname, '..', 'trades');
-  const subDirs = ['LIVE - V1', 'LIVE - V2', 'G - Blast - Paper (Upgrade 2.0)'];
+  const subDirs = ['LIVE - V1', 'LIVE - V2', 'G - Blast - Paper (Upgrade 2.0)', 'G - BLAST - Ratchet'];
 
   // Helper for recursive local scan
   function scanDirLocally(dir, relativePath = '') {
@@ -224,7 +224,8 @@ function normalizeTrade(row, filename) {
     baseName.startsWith('v1_') ||
     baseName.startsWith('v2_') ||
     baseName.startsWith('v3_') ||
-    filenameLower.includes('g - blast - paper (upgrade 2.0)');
+    filenameLower.includes('g - blast - paper (upgrade 2.0)') ||
+    filenameLower.includes('g - blast - ratchet');
 
   if (isBlaze) {
     const type = row.type || row.Type || row.TYPE || '';
@@ -259,6 +260,8 @@ function normalizeTrade(row, filename) {
       strategy = filename.includes('hybrid') ? 'V2_LIVE_HYBRID' : 'V2_LIVE_KITE';
     } else if (filenameLower.includes('g - blast - paper (upgrade 2.0)')) {
       strategy = 'GBlastV2_Upgrade';
+    } else if (filenameLower.includes('g - blast - ratchet')) {
+      strategy = 'GBlastRatchet';
     } else if (tradeType === 'version_3') {
       strategy = 'GBlastV3';
     } else if (tradeType === 'version_2') {
