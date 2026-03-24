@@ -1,0 +1,2 @@
+symbol,entry_time,exit_time,entry_price,exit_price,quantity,position_type,net_pnl,profit_pct,exit_reason,holding_minutes,max_profit_seen,exit_level,hard_stop_915,confluence_trade,oi_signal_pattern,hybrid_signal_type,entry_reason
+ADANIENSOL,2026-03-23T09:33:23.320932,2026-03-23T10:37:05.106720,987.5,946.2,50,SHORT,2064.9999999999977,4.182278481012654,PROFIT_TRAILING_STOP_5MIN,63,4.506329113924051,946.9,1000.9,True,BEARISH,BEARISH,UNKNOWN

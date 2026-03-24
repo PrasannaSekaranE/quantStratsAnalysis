@@ -79,11 +79,15 @@ def parse_log(filename, version):
                     current_trade = {}
     return trades
 
-log_files = [
-    ('blaze_trading_V1_20260311.log', 'v1', 'BLAZE_20260311_V1.csv'),
-    ('blaze_trading_V2_20260311.log', 'v2', 'BLAZE_20260311_V2.csv'),
-    ('blaze_trading_V3_20260311.log', 'v3', 'BLAZE_20260311_V3.csv')
-]
+log_files = []
+for f in os.listdir('.'):
+    if f.startswith('blaze_trading_V') and f.endswith('.log'):
+        match = re.search(r'V(\d)_(\d{8})', f)
+        if match:
+            v_num = match.group(1)
+            date_str = match.group(2)
+            csv_name = f"BLAZE_{date_str}_V{v_num}.csv"
+            log_files.append((f, f'v{v_num}', csv_name))
 
 fieldnames = [
     'entry_time','nifty_signal','nifty_spot','sensex_atm','entry_strike',
