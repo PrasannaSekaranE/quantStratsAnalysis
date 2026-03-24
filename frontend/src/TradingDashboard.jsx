@@ -67,10 +67,9 @@ const TradingDashboard = () => {
   }, [tradesData, activeStrategy, selectedDate]);
 
   const currentStats = useMemo(() => {
-    // If date is selected, calculate stats from filtered trades
-    // Otherwise, use pre-calculated stats from backend
-    if (selectedDate !== 'ALL') {
-      console.log(`📊 Calculating stats for selected date: ${selectedDate}`);
+    // Calculate stats dynamically if either a date OR a specific strategy is selected
+    if (selectedDate !== 'ALL' || activeStrategy !== 'ALL') {
+      console.log(`📊 Calculating stats for: Strategy=${activeStrategy}, Date=${selectedDate}`);
       // Calculate stats dynamically from filtered trades
       const trades = filteredTrades;
       if (trades.length === 0) {
@@ -108,17 +107,12 @@ const TradingDashboard = () => {
         avgPnLPerTrade
       };
 
-      console.log(`   ✓ Total Trades: ${calculatedStats.totalTrades}`);
-      console.log(`   ✓ Net PnL: ₹${calculatedStats.totalPnL.toFixed(2)}`);
-      console.log(`   ✓ Win Rate: ${calculatedStats.winRate.toFixed(2)}%`);
-      console.log(`   ✓ Avg Win: ₹${calculatedStats.avgProfit.toFixed(2)}, Avg Loss: ₹${calculatedStats.avgLoss.toFixed(2)}`);
-
       return calculatedStats;
     }
 
-    // No date filter - use pre-calculated stats
+    // No filters - use pre-calculated global stats from backend
     if (!stats) return null;
-    return stats[activeStrategy] || stats.ALL;
+    return stats.ALL;
   }, [stats, activeStrategy, selectedDate, filteredTrades]);
 
   // Set default sort: desc for all (show latest first), with optional Blaze customization
