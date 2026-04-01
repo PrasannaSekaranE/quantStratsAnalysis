@@ -239,6 +239,8 @@ function normalizeTrade(row, filename) {
       strategy = 'BlazeV4_2';
     } else if (type === 'v5') {
       strategy = 'BlazeV5';
+    } else if (baseName.includes('niftybees')) {
+      strategy = 'B20';
     } else {
       strategy = 'Blaze';
     }
@@ -293,7 +295,7 @@ function normalizeTrade(row, filename) {
     return Number(val);
   };
 
-  let symbol = row.symbol || row.Symbol || row.SYMBOL || row.kite_symbol || row.tradingsymbol || '';
+  let symbol = row.symbol || row.Symbol || row.SYMBOL || row.kite_symbol || row.tradingsymbol || row.instrument || '';
   if (isGBlast && !symbol) {
     const strike = row.entry_strike || row.Entry_Strike || row.ENTRY_STRIKE || '';
     const optionType = row.option_type || row.Option_Type || row.OPTION_TYPE || '';
@@ -314,7 +316,7 @@ function normalizeTrade(row, filename) {
     exit_time: exitTime || '',
     date: date,
     entry_price: parseFloatSafe(row.entry_price || row.Entry_Price || row.ENTRY_PRICE),
-    exit_price: parseFloatSafe(row.exit_price || row.Exit_Price || row.EXIT_PRICE),
+    exit_price: parseFloatSafe(row.exit_price || row.Exit_Price || row.EXIT_PRICE || row.niftybees_exit_price),
     position_type: positionType,
     net_pnl: pnl,
     profit_pct: profitPct,
