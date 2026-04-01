@@ -207,6 +207,7 @@ function normalizeTrade(row, filename) {
 
   let positionType = (row.position_type || row.Position_Type || row.POSITION_TYPE || '').toUpperCase();
 
+  let strategy = 'Unknown';
   const baseName = path.basename(filename).toLowerCase();
   
   if (baseName.includes('niftybees') || baseName.includes('b-20') || baseName.includes('b20')) {
