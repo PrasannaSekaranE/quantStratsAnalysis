@@ -207,11 +207,14 @@ function normalizeTrade(row, filename) {
 
   let positionType = (row.position_type || row.Position_Type || row.POSITION_TYPE || '').toUpperCase();
 
-  let strategy = 'Unknown';
-  const filenameLower = filename.toLowerCase();
   const baseName = path.basename(filename).toLowerCase();
+  
+  if (baseName.includes('niftybees') || baseName.includes('b-20') || baseName.includes('b20')) {
+    strategy = 'B20';
+  }
 
   const isBlaze = baseName.startsWith('blaze_');
+  const filenameLower = filename.toLowerCase();
 
   const isGBlast = filenameLower.includes('live - v1') ||
     filenameLower.includes('live - v2') ||
@@ -227,7 +230,7 @@ function normalizeTrade(row, filename) {
     filenameLower.includes('g - blast - paper (upgrade 2.0)') ||
     filenameLower.includes('g - blast - ratchet');
 
-  if (isBlaze) {
+  if (strategy === 'Unknown' && isBlaze) {
     const type = row.type || row.Type || row.TYPE || '';
     if (type === 'v2') {
       strategy = 'BlazeV2';
@@ -239,8 +242,6 @@ function normalizeTrade(row, filename) {
       strategy = 'BlazeV4_2';
     } else if (type === 'v5') {
       strategy = 'BlazeV5';
-    } else if (baseName.includes('niftybees')) {
-      strategy = 'B20';
     } else {
       strategy = 'Blaze';
     }
@@ -253,6 +254,15 @@ function normalizeTrade(row, filename) {
       positionType = 'LONG';
     } else if (niftySignal === 'BEARISH' || sensexSignal === 'BEARISH') {
       positionType = 'SHORT';
+    }
+  }
+  
+  if (strategy === 'Unknown' && isGBlast) {
+    // Fallback for B-20/NiftyBeES signal columns
+    if (!positionType) {
+      const b20Signal = (row.signal_type || row.Signal_Type || row.SIGNAL_TYPE || '').toUpperCase();
+      if (b20Signal === 'BULLISH') positionType = 'LONG';
+      else if (b20Signal === 'BEARISH') positionType = 'SHORT';
     }
   } else if (isGBlast) {
     const tradeType = row.type || row.Type || row.TYPE || '';
@@ -284,10 +294,18 @@ function normalizeTrade(row, filename) {
         positionType = 'SHORT';
       }
     }
-  } else if (positionType === 'SHORT') {
-    strategy = 'iTrack';
-  } else if (positionType === 'LONG') {
-    strategy = 'TrendFlo';
+  }
+
+  // Fallback for B-20/NiftyBeES signal columns (independent of isBlaze for robustness)
+  if (strategy === 'B20' && !positionType) {
+    const b20Signal = (row.signal_type || row.Signal_Type || row.SIGNAL_TYPE || '').toUpperCase();
+    if (b20Signal === 'BULLISH') positionType = 'LONG';
+    else if (b20Signal === 'BEARISH') positionType = 'SHORT';
+  }
+
+  if (strategy === 'Unknown') {
+    if (positionType === 'SHORT') strategy = 'iTrack';
+    else if (positionType === 'LONG') strategy = 'TrendFlo';
   }
 
   const parseFloatSafe = (val) => {
