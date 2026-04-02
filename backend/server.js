@@ -33,7 +33,7 @@ const GITHUB_BRANCH = 'main';
  */
 async function getTradeFileList() {
   const tradesDir = path.join(__dirname, '..', 'trades');
-  const subDirs = ['LIVE - V1', 'LIVE - V2', 'G - Blast - Paper (Upgrade 2.0)', 'G - BLAST - Ratchet'];
+  const subDirs = ['LIVE - V1', 'LIVE - V2', 'G - Blast - Paper (Upgrade 2.0)', 'G - BLAST - Ratchet', 'Blaze - (v4, v4.2, v5)'];
 
   // Helper for recursive local scan
   function scanDirLocally(dir, relativePath = '') {
@@ -237,11 +237,11 @@ function normalizeTrade(row, filename) {
       strategy = 'BlazeV2';
     } else if (type === 'v3') {
       strategy = 'BlazeV3';
-    } else if (type === 'v4') {
+    } else if (type === 'v4' || baseName.endsWith('_v4.csv')) {
       strategy = 'BlazeV4';
-    } else if (type === 'v4.2') {
+    } else if (type === 'v4.2' || baseName.endsWith('_v5.csv')) {
       strategy = 'BlazeV4_2';
-    } else if (type === 'v5') {
+    } else if (type === 'v5' || baseName.endsWith('_v6.csv')) {
       strategy = 'BlazeV5';
     } else {
       strategy = 'Blaze';

@@ -1,0 +1,3 @@
+entry_time,sensex_signal,sensex_spot,sensex_atm,entry_strike,option_type,entry_price,exit_target,stop_loss,original_stop_loss,lot_size,quantity_lots,capital_deployed,instrument_key,status,exit_time,exit_price,pnl_per_lot,total_pnl,pnl_pct,exit_reason
+2026-03-30 09:24:00.000000,BEARISH,72570.17,72600,73000,PE,1202.7,1322.97,781.755,781.755,20,4,96216.0,BSE_FO|866539,CLOSED,2026-03-30 14:34:00.000000,1322.97,120.27,9621.6,10.0,TARGET_HIT
+2026-03-30 14:34:00.000000,BEARISH,72041.19,72000,72200,PE,850.3,935.33,552.695,552.695,20,5,85030.0,BSE_FO|877126,CLOSED,2026-03-30 15:00:00.000000,935.33,85.03,8503.0,10.0,TARGET_HIT

@@ -1,0 +1,2 @@
+entry_time,sensex_signal,sensex_spot,sensex_atm,entry_strike,option_type,entry_price,exit_target,stop_loss,original_stop_loss,trailing_active,lot_size,quantity_lots,capital_deployed,instrument_key,status,exit_time,exit_price,pnl_per_lot,total_pnl,pnl_pct,holding_minutes,exit_reason
+2026-03-25 14:24:00.000000,BEARISH,75340.11,75300,75600,PE,1269.25,1370.79,1281.9425,1078.8625,True,20,3,76155.0,BSE_FO|864480,CLOSED,2026-03-25 14:30:00.000000,1281.9425,12.6925,761.55,1.0,6,TRAILING_SL
