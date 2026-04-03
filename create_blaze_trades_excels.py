@@ -133,7 +133,9 @@ def add_summary_sheet(writer, df, version_name):
 
 def get_files(pattern_include, pattern_exclude=None):
     files = []
-    for f in glob.glob(os.path.join(TRADES_DIR, pattern_include)):
+    # Use recursive globbing
+    full_pattern = os.path.join(TRADES_DIR, "**", pattern_include)
+    for f in glob.glob(full_pattern, recursive=True):
         if pattern_exclude and pattern_exclude in os.path.basename(f):
             continue
         files.append(f)
@@ -146,8 +148,8 @@ v1_files = get_files("BLAZE_*_V1.csv")
 v2_files = get_files("BLAZE_*_V2.csv")
 v3_files = get_files("BLAZE_*_V3.csv")
 
-# Old-format BLAZE files (not SENSEX, not _Vx)
-old_blaze = sorted([f for f in glob.glob(os.path.join(TRADES_DIR, "BLAZE_2*.csv"))
+# Old-format BLAZE files (not SENSEX, not _Vx) - Search recursively
+old_blaze = sorted([f for f in glob.glob(os.path.join(TRADES_DIR, "**/BLAZE_2*.csv"), recursive=True)
                     if "SENSEX" not in os.path.basename(f)
                     and "_V1" not in os.path.basename(f)
                     and "_V2" not in os.path.basename(f)
@@ -175,11 +177,15 @@ v1_files = sorted(set(v1_files))
 v2_files = sorted(set(v2_files))
 v3_files = sorted(set(v3_files))
 
-# SENSEX files: two per day distinguished by the trailing digit (6 vs 7)
-sensex_v4  = sorted([f for f in glob.glob(os.path.join(TRADES_DIR, "BLAZE_SENSEX_*.csv"))
-                     if os.path.basename(f).endswith("6.csv")])
-sensex_v5  = sorted([f for f in glob.glob(os.path.join(TRADES_DIR, "BLAZE_SENSEX_*.csv"))
-                     if os.path.basename(f).endswith("7.csv")])
+# SENSEX files: recursive search
+# Mapping: *v4.csv -> V4, *v5.csv -> V4.2, *v6.csv -> V5
+# Fallback for old ending (6.csv, 7.csv)
+sensex_v4  = sorted([f for f in glob.glob(os.path.join(TRADES_DIR, "**/BLAZE_SENSEX_*.csv"), recursive=True)
+                     if os.path.basename(f).endswith("_v4.csv") or os.path.basename(f).endswith("6.csv")])
+sensex_v42 = sorted([f for f in glob.glob(os.path.join(TRADES_DIR, "**/BLAZE_SENSEX_*.csv"), recursive=True)
+                     if os.path.basename(f).endswith("_v5.csv")])
+sensex_v5  = sorted([f for f in glob.glob(os.path.join(TRADES_DIR, "**/BLAZE_SENSEX_*.csv"), recursive=True)
+                     if os.path.basename(f).endswith("_v6.csv") or os.path.basename(f).endswith("7.csv")])
 
 # ─────────────────────────── build Excels ────────────────────────
 
@@ -187,8 +193,9 @@ versions = [
     ("Blaze V1",         v1_files),
     ("Blaze V2",         v2_files),
     ("Blaze V3",         v3_files),
-    ("Blaze SENSEX-V4",  sensex_v4),
-    ("Blaze SENSEX-V5",  sensex_v5),
+    ("Blaze V4",         sensex_v4),
+    ("Blaze V4.2",       sensex_v42),
+    ("Blaze V5",         sensex_v5),
 ]
 
 for version_name, files in versions:
