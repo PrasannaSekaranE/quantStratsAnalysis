@@ -263,29 +263,22 @@ function normalizeTrade(row, filename) {
   }
   
   if (strategy === 'Unknown' && isGBlast) {
-    // Fallback for B-20/NiftyBeES signal columns
-    if (!positionType) {
-      const b20Signal = (row.signal_type || row.Signal_Type || row.SIGNAL_TYPE || '').toUpperCase();
-      if (b20Signal === 'BULLISH') positionType = 'LONG';
-      else if (b20Signal === 'BEARISH') positionType = 'SHORT';
-    }
-  } else if (isGBlast) {
-    const tradeType = row.type || row.Type || row.TYPE || '';
-    if (filename.includes('LIVE - V1')) {
-      strategy = filename.includes('hybrid') ? 'V1_LIVE_HYBRID' : 'V1_LIVE_KITE';
-    } else if (filename.includes('LIVE - V2')) {
-      strategy = filename.includes('hybrid') ? 'V2_LIVE_HYBRID' : 'V2_LIVE_KITE';
+    if (filenameLower.includes('live - v1')) {
+      strategy = filenameLower.includes('hybrid') ? 'V1_LIVE_HYBRID' : 'V1_LIVE_KITE';
+    } else if (filenameLower.includes('live - v2')) {
+      strategy = filenameLower.includes('hybrid') ? 'V2_LIVE_HYBRID' : 'V2_LIVE_KITE';
     } else if (filenameLower.includes('g - blast - paper (upgrade 2.0)')) {
       strategy = 'GBlastV2_Upgrade';
     } else if (filenameLower.includes('g - blast - ratchet')) {
       strategy = 'GBlastRatchet';
-    } else if (tradeType === 'version_3') {
-      strategy = 'GBlastV3';
-    } else if (tradeType === 'version_2') {
-      strategy = 'GBlastV2';
     } else {
-      strategy = 'GBlast';
+      const tradeType = row.type || row.Type || row.TYPE || '';
+      if (tradeType === 'version_3') strategy = 'GBlastV3';
+      else if (tradeType === 'version_2') strategy = 'GBlastV2';
+      else strategy = 'GBlast';
     }
+
+    // Determine positionType for G-Blast
     const direction = (row.direction || row.Direction || row.DIRECTION || '').toUpperCase();
     if (direction === 'BUY_CALL') {
       positionType = 'LONG';
