@@ -210,114 +210,76 @@ function normalizeTrade(row, filename) {
     }
   }
 
-  let positionType = (row.position_type || row.Position_Type || row.POSITION_TYPE || '').toUpperCase();
-
+  // 1. Detect Strategy & PositionType Indicators
   let strategy = 'Unknown';
   const baseName = path.basename(filename).toLowerCase();
   const filenameLower = filename.toLowerCase();
-  
-  if (baseName.includes('niftybees') || baseName.includes('b-20') || baseName.includes('b20') || filenameLower.includes('b - 20 - nifty bees')) {
-    strategy = 'B20';
-  }
+  const typeCol = (row.type || row.Type || row.TYPE || '').toLowerCase().trim();
 
   const isBlaze = baseName.startsWith('blaze_') || filenameLower.includes('blaze');
-  
-  const isGBlast = filenameLower.includes('live - v1') ||
-    filenameLower.includes('live - v2') ||
-    baseName.includes('live_trades') ||
-    baseName.includes('gblast') ||
-    baseName.includes('g-blast') ||
-    baseName.includes('g_blast') ||
-    baseName.includes('hybrid_trades') ||
-    baseName.includes('paper_trades') ||
-    baseName.startsWith('v1_') ||
-    baseName.startsWith('v2_') ||
-    baseName.startsWith('v3_') ||
-    filenameLower.includes('g - blast - paper (upgrade 2.0)') ||
-    filenameLower.includes('g - blast - ratchet');
+  const isGBlast = filenameLower.includes('live - v1') || 
+                   filenameLower.includes('live - v2') || 
+                   filenameLower.includes('g - blast') ||
+                   baseName.startsWith('v1_') ||
+                   baseName.startsWith('v2_') ||
+                   baseName.startsWith('v3_');
 
-  if (strategy === 'Unknown' && isBlaze) {
-    const type = row.type || row.Type || row.TYPE || '';
-    
-    // Check folders first (high priority)
-    if (filenameLower.includes('blaze v2')) {
-      strategy = 'BlazeV2';
-    } else if (filenameLower.includes('blaze v3')) {
-      strategy = 'BlazeV3';
-    } else if (filenameLower.includes('blaze v4.2')) {
-      strategy = 'BlazeV4_2';
-    } else if (filenameLower.includes('blaze v4')) {
-      strategy = 'BlazeV4';
-    } else if (filenameLower.includes('blaze 5')) {
-      strategy = 'BlazeV5';
-    } else if (filenameLower.includes('blaze v1')) {
-      strategy = 'BlazeV1';
-    } 
-    // Fallback to filename/content logic
-    else if (type === 'v2') {
-      strategy = 'BlazeV2';
-    } else if (type === 'v3') {
-      strategy = 'BlazeV3';
-    } else if (type === 'v4' || baseName.endsWith('_v4.csv')) {
-      strategy = 'BlazeV4';
-    } else if (type === 'v4.2' || baseName.endsWith('_v5.csv')) {
-      strategy = 'BlazeV4_2';
-    } else if (type === 'v5' || baseName.endsWith('_v6.csv')) {
-      strategy = 'BlazeV5';
-    } else {
-      strategy = 'Blaze';
-    }
+  // Folder-based Detection (highest priority)
+  if (filenameLower.includes('blaze v1 - v1')) {
+    strategy = 'Blaze';
+  } else if (filenameLower.includes('blaze v2 -v2')) {
+    strategy = 'BlazeV2';
+  } else if (filenameLower.includes('blaze v3 - v3')) {
+    strategy = 'BlazeV3';
+  } else if (filenameLower.includes('blaze v4.2 - v4.2')) {
+    strategy = 'BlazeV4_2';
+  } else if (filenameLower.includes('blaze v4 - v4')) {
+    strategy = 'BlazeV4';
+  } else if (filenameLower.includes('blaze 5 - v5')) {
+    strategy = 'BlazeV5';
+  } else if (filenameLower.includes('b - 20 - nifty bees')) {
+    strategy = 'B20';
+  } else if (filenameLower.includes('live - v1')) {
+    strategy = filenameLower.includes('hybrid') ? 'V1_LIVE_HYBRID' : 'V1_LIVE_KITE';
+  } else if (filenameLower.includes('live - v2')) {
+    strategy = filenameLower.includes('hybrid') ? 'V2_LIVE_HYBRID' : 'V2_LIVE_KITE';
+  } else if (filenameLower.includes('g - blast - paper (upgrade 2.0)')) {
+    strategy = 'GBlastV2_Upgrade';
+  } else if (filenameLower.includes('g - blast - ratchet')) {
+    strategy = 'GBlastRatchet';
+  }
 
-    // Handle both nifty_signal and sensex_signal
-    const niftySignal = (row.nifty_signal || row.Nifty_Signal || row.NIFTY_SIGNAL || '').toUpperCase();
-    const sensexSignal = (row.sensex_signal || row.Sensex_Signal || row.SENSEX_SIGNAL || '').toUpperCase();
+  // Fallback to manual 'type' column or filename patterns
+  if (strategy === 'Unknown') {
+    if (typeCol === 'v1' || baseName.includes('_v1')) strategy = 'Blaze';
+    else if (typeCol === 'v2' || baseName.includes('_v2')) strategy = 'BlazeV2';
+    else if (typeCol === 'v3' || baseName.includes('_v3')) strategy = 'BlazeV3';
+    else if (typeCol === 'v4' || baseName.includes('_v4')) strategy = 'BlazeV4';
+    else if (typeCol === 'v4.2' || typeCol === 'v42' || baseName.includes('_v4.2') || baseName.includes('_v5.csv')) strategy = 'BlazeV4_2';
+    else if (typeCol === 'v5' || typeCol === 'v6' || baseName.includes('_v5') || baseName.includes('_v6')) strategy = 'BlazeV5';
+    else if (baseName.includes('niftybees') || baseName.includes('b-20') || baseName.includes('b20')) strategy = 'B20';
+    else if (baseName.startsWith('v1_')) strategy = 'Blaze';
+    else if (baseName.startsWith('v2_')) strategy = 'BlazeV2';
+    else if (baseName.startsWith('v3_')) strategy = 'BlazeV3';
+  }
 
-    if (niftySignal === 'BULLISH' || sensexSignal === 'BULLISH') {
+  // 2. Extract Position Type
+  let positionType = (row.position_type || row.Position_Type || row.POSITION_TYPE || '').toUpperCase();
+  const niftySignal = (row.nifty_signal || row.Nifty_Signal || row.NIFTY_SIGNAL || '').toUpperCase();
+  const sensexSignal = (row.sensex_signal || row.Sensex_Signal || row.SENSEX_SIGNAL || '').toUpperCase();
+  const b20Signal = (row.signal_type || row.Signal_Type || row.SIGNAL_TYPE || '').toUpperCase();
+
+  if (!positionType) {
+    if (niftySignal === 'BULLISH' || sensexSignal === 'BULLISH' || b20Signal === 'BULLISH' || row.direction === 'BUY_CALL') {
       positionType = 'LONG';
-    } else if (niftySignal === 'BEARISH' || sensexSignal === 'BEARISH') {
+    } else if (niftySignal === 'BEARISH' || sensexSignal === 'BEARISH' || b20Signal === 'BEARISH' || row.direction === 'BUY_PUT') {
       positionType = 'SHORT';
-    }
-  }
-  
-  if (strategy === 'Unknown' && isGBlast) {
-    if (filenameLower.includes('live - v1')) {
-      strategy = filenameLower.includes('hybrid') ? 'V1_LIVE_HYBRID' : 'V1_LIVE_KITE';
-    } else if (filenameLower.includes('live - v2')) {
-      strategy = filenameLower.includes('hybrid') ? 'V2_LIVE_HYBRID' : 'V2_LIVE_KITE';
-    } else if (filenameLower.includes('g - blast - paper (upgrade 2.0)')) {
-      strategy = 'GBlastV2_Upgrade';
-    } else if (filenameLower.includes('g - blast - ratchet')) {
-      strategy = 'GBlastRatchet';
-    } else {
-      const tradeType = row.type || row.Type || row.TYPE || '';
-      if (tradeType === 'version_3') strategy = 'GBlastV3';
-      else if (tradeType === 'version_2') strategy = 'GBlastV2';
-      else strategy = 'GBlast';
-    }
-
-    // Determine positionType for G-Blast
-    const direction = (row.direction || row.Direction || row.DIRECTION || '').toUpperCase();
-    if (direction === 'BUY_CALL') {
-      positionType = 'LONG';
-    } else if (direction === 'BUY_PUT') {
-      positionType = 'SHORT';
-    } else {
-      const signalType = (row.signal_type || row.Signal_Type || row.SIGNAL_TYPE || '').toUpperCase();
-      if (signalType === 'BULLISH') {
-        positionType = 'LONG';
-      } else if (signalType === 'BEARISH') {
-        positionType = 'SHORT';
-      }
+    } else if (row.direction || row.Direction || row.DIRECTION) {
+      positionType = (row.direction || row.Direction || row.DIRECTION).toUpperCase();
     }
   }
 
-  // Fallback for B-20/NiftyBeES signal columns (independent of isBlaze for robustness)
-  if (strategy === 'B20' && !positionType) {
-    const b20Signal = (row.signal_type || row.Signal_Type || row.SIGNAL_TYPE || '').toUpperCase();
-    if (b20Signal === 'BULLISH') positionType = 'LONG';
-    else if (b20Signal === 'BEARISH') positionType = 'SHORT';
-  }
-
+  // Final catch-all for TrendFlo/iTrack
   if (strategy === 'Unknown') {
     if (positionType === 'SHORT') strategy = 'iTrack';
     else if (positionType === 'LONG') strategy = 'TrendFlo';
@@ -325,19 +287,17 @@ function normalizeTrade(row, filename) {
 
   const parseFloatSafe = (val) => {
     if (!val || val === '') return 0;
-    return Number(val);
+    const cleaned = String(val).replace(/[₹,%]/g, '');
+    return Number(cleaned) || 0;
   };
 
-  let symbol = row.symbol || row.Symbol || row.SYMBOL || row.kite_symbol || row.tradingsymbol || row.instrument || '';
-  if (isGBlast && !symbol) {
+  // 3. Extract Symbol
+  let symbol = row.symbol || row.Symbol || row.SYMBOL || row.kite_symbol || row.tradingsymbol || row.instrument || row.instrument_key || '';
+  if ((isGBlast || isBlaze) && !symbol) {
     const strike = row.entry_strike || row.Entry_Strike || row.ENTRY_STRIKE || '';
     const optionType = row.option_type || row.Option_Type || row.OPTION_TYPE || '';
-    symbol = strike && optionType ? `NIFTY ${strike} ${optionType}` : 'NIFTY';
-  }
-  if (isBlaze && !symbol) {
-    const strike = row.entry_strike || row.Entry_Strike || row.ENTRY_STRIKE || '';
-    const optionType = row.option_type || row.Option_Type || row.OPTION_TYPE || '';
-    symbol = strike && optionType ? `SENSEX ${strike} ${optionType}` : 'SENSEX';
+    const base = isGBlast ? 'NIFTY' : 'SENSEX';
+    symbol = strike && optionType ? `${base} ${strike} ${optionType}` : base;
   }
 
   const pnl = parseFloatSafe(row.total_pnl || row.net_pnl || row.pnl || row.Net_PnL || row.PNL || row.Total_PnL);
@@ -536,8 +496,9 @@ async function loadTradesFromGitHub() {
           const beforeFilterPnL = validTrades.reduce((sum, t) => sum + t.net_pnl, 0);
 
           validTrades = validTrades.filter(trade => {
-            // EXEMPT BlazeV4, BlazeV4_2, BlazeV5 and B20 from the 2:00 PM filter
-            if (trade.strategy === 'BlazeV4' || trade.strategy === 'BlazeV4_2' || trade.strategy === 'BlazeV5' || trade.strategy === 'B20') return true;
+            // EXEMPT all Blaze versions and B-20 from the 2:00 PM filter
+            const blazeStrategies = ['Blaze', 'BlazeV2', 'BlazeV3', 'BlazeV4', 'BlazeV4_2', 'BlazeV5'];
+            if (blazeStrategies.includes(trade.strategy) || trade.strategy === 'B20') return true;
 
             // Filter: time < 14:00 (before 2:00 PM) for other versions (V1-V3)
             let hour = 0;
