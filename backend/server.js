@@ -213,14 +213,14 @@ function normalizeTrade(row, filename) {
 
   let strategy = 'Unknown';
   const baseName = path.basename(filename).toLowerCase();
+  const filenameLower = filename.toLowerCase();
   
-  if (baseName.includes('niftybees') || baseName.includes('b-20') || baseName.includes('b20')) {
+  if (baseName.includes('niftybees') || baseName.includes('b-20') || baseName.includes('b20') || filenameLower.includes('b - 20 - nifty bees')) {
     strategy = 'B20';
   }
 
-  const isBlaze = baseName.startsWith('blaze_');
-  const filenameLower = filename.toLowerCase();
-
+  const isBlaze = baseName.startsWith('blaze_') || filenameLower.includes('blaze');
+  
   const isGBlast = filenameLower.includes('live - v1') ||
     filenameLower.includes('live - v2') ||
     baseName.includes('live_trades') ||
@@ -237,7 +237,23 @@ function normalizeTrade(row, filename) {
 
   if (strategy === 'Unknown' && isBlaze) {
     const type = row.type || row.Type || row.TYPE || '';
-    if (type === 'v2') {
+    
+    // Check folders first (high priority)
+    if (filenameLower.includes('blaze v2')) {
+      strategy = 'BlazeV2';
+    } else if (filenameLower.includes('blaze v3')) {
+      strategy = 'BlazeV3';
+    } else if (filenameLower.includes('blaze v4.2')) {
+      strategy = 'BlazeV4_2';
+    } else if (filenameLower.includes('blaze v4')) {
+      strategy = 'BlazeV4';
+    } else if (filenameLower.includes('blaze 5')) {
+      strategy = 'BlazeV5';
+    } else if (filenameLower.includes('blaze v1')) {
+      strategy = 'BlazeV1';
+    } 
+    // Fallback to filename/content logic
+    else if (type === 'v2') {
       strategy = 'BlazeV2';
     } else if (type === 'v3') {
       strategy = 'BlazeV3';
