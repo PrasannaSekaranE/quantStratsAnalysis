@@ -35,6 +35,7 @@ async function getTradeFileList() {
   const tradesDir = path.join(__dirname, '..', 'trades');
   const subDirs = [
     'LIVE - V1', 'LIVE - V2', 'G - Blast - Paper (Upgrade 2.0)', 'G - BLAST - Ratchet', 
+    'G - BLAST - LIVE',
     'Blaze v1 - v1', 'Blaze v2 -v2', 'Blaze v3 - v3', 'Blaze v4 - v4',
     'Blaze v4.2 - v4.2', 'Blaze 5 - v5', 'B - 20 - Nifty BEES'
   ];
@@ -535,8 +536,8 @@ async function loadTradesFromGitHub() {
           const beforeFilterPnL = validTrades.reduce((sum, t) => sum + t.net_pnl, 0);
 
           validTrades = validTrades.filter(trade => {
-            // EXEMPT BlazeV4 and B20 from the 2:00 PM filter
-            if (trade.strategy === 'BlazeV4' || trade.strategy === 'B20') return true;
+            // EXEMPT BlazeV4, BlazeV4_2, BlazeV5 and B20 from the 2:00 PM filter
+            if (trade.strategy === 'BlazeV4' || trade.strategy === 'BlazeV4_2' || trade.strategy === 'BlazeV5' || trade.strategy === 'B20') return true;
 
             // Filter: time < 14:00 (before 2:00 PM) for other versions (V1-V3)
             let hour = 0;
