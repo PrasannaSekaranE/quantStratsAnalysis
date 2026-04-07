@@ -141,51 +141,22 @@ def get_files(pattern_include, pattern_exclude=None):
         files.append(f)
     return sorted(files)
 
-# Categorise BLAZE_ files (non-SENSEX)
-#   *_V1.csv / *_V2.csv / *_V3.csv  – named versions
-#   *_HHMMSS.csv (old format, 3 per day) – grouped by day, sorted asc
-v1_files = get_files("BLAZE_*_V1.csv")
-v2_files = get_files("BLAZE_*_V2.csv")
-v3_files = get_files("BLAZE_*_V3.csv")
+# ──────────────────────── file categorisation ────────────────────
 
-# Old-format BLAZE files (not SENSEX, not _Vx) - Search recursively
-old_blaze = sorted([f for f in glob.glob(os.path.join(TRADES_DIR, "**/BLAZE_2*.csv"), recursive=True)
-                    if "SENSEX" not in os.path.basename(f)
-                    and "_V1" not in os.path.basename(f)
-                    and "_V2" not in os.path.basename(f)
-                    and "_V3" not in os.path.basename(f)])
+def get_files_recursively(folder_name, pattern="*.csv"):
+    folder_path = os.path.join(TRADES_DIR, folder_name)
+    if not os.path.exists(folder_path):
+        return []
+    return sorted(glob.glob(os.path.join(folder_path, "**", pattern), recursive=True))
 
-# Group old-format files by date (YYYYMMDD), then by position in that day (1st=V1, 2nd=V2, 3rd=V3)
-from collections import defaultdict
-day_groups = defaultdict(list)
-for f in old_blaze:
-    bn = os.path.basename(f)
-    date_part = bn.split("_")[1]  # e.g. 20260309
-    day_groups[date_part].append(f)
-
-for date_part in day_groups:
-    day_groups[date_part].sort()  # sort by full filename (time part)
-    sorted_files = day_groups[date_part]
-    if len(sorted_files) >= 1:
-        v1_files.append(sorted_files[0])
-    if len(sorted_files) >= 2:
-        v2_files.append(sorted_files[1])
-    if len(sorted_files) >= 3:
-        v3_files.append(sorted_files[2])
-
-v1_files = sorted(set(v1_files))
-v2_files = sorted(set(v2_files))
-v3_files = sorted(set(v3_files))
-
-# SENSEX files: recursive search
-# Mapping: *v4.csv -> V4, *v5.csv -> V4.2, *v6.csv -> V5
-# Fallback for old ending (6.csv, 7.csv)
-sensex_v4  = sorted([f for f in glob.glob(os.path.join(TRADES_DIR, "**/BLAZE_SENSEX_*.csv"), recursive=True)
-                     if os.path.basename(f).endswith("_v4.csv") or os.path.basename(f).endswith("6.csv")])
-sensex_v42 = sorted([f for f in glob.glob(os.path.join(TRADES_DIR, "**/BLAZE_SENSEX_*.csv"), recursive=True)
-                     if os.path.basename(f).endswith("_v5.csv")])
-sensex_v5  = sorted([f for f in glob.glob(os.path.join(TRADES_DIR, "**/BLAZE_SENSEX_*.csv"), recursive=True)
-                     if os.path.basename(f).endswith("_v6.csv") or os.path.basename(f).endswith("7.csv")])
+# Map versions to their new dedicated folders
+v1_files   = get_files_recursively("Blaze v1 - v1")
+v2_files   = get_files_recursively("Blaze v2 -v2")
+v3_files   = get_files_recursively("Blaze v3 - v3")
+v4_files   = get_files_recursively("Blaze v4 - v4")
+v42_files  = get_files_recursively("Blaze v4.2 - v4.2")
+v5_files   = get_files_recursively("Blaze 5 - v5")
+b20_files  = get_files_recursively("B - 20 - Nifty BEES")
 
 # ─────────────────────────── build Excels ────────────────────────
 
@@ -193,9 +164,10 @@ versions = [
     ("Blaze V1",         v1_files),
     ("Blaze V2",         v2_files),
     ("Blaze V3",         v3_files),
-    ("Blaze V4",         sensex_v4),
-    ("Blaze V4.2",       sensex_v42),
-    ("Blaze V5",         sensex_v5),
+    ("Blaze V4",         v4_files),
+    ("Blaze V4.2",       v42_files),
+    ("Blaze V5",         v5_files),
+    ("B-20 (NiftyBEES)", b20_files),
 ]
 
 for version_name, files in versions:

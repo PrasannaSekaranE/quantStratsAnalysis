@@ -35,8 +35,8 @@ async function getTradeFileList() {
   const tradesDir = path.join(__dirname, '..', 'trades');
   const subDirs = [
     'LIVE - V1', 'LIVE - V2', 'G - Blast - Paper (Upgrade 2.0)', 'G - BLAST - Ratchet', 
-    'Blaze - (v4, v4.2, v5)', 'BLAZE (1,2,3) - 25-03 to 01-04',
-    'Blaze v1', 'Blaze v2', 'Blaze v3'
+    'Blaze v1 - v1', 'Blaze v2 -v2', 'Blaze v3 - v3', 'Blaze v4 - v4',
+    'Blaze v4.2 - v4.2', 'Blaze 5 - v5', 'B - 20 - Nifty BEES'
   ];
 
   // Helper for recursive local scan
