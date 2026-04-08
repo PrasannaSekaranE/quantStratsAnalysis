@@ -86,6 +86,20 @@ def sync_gblast_reconciliation():
         print(f"Error processing Excel data: {e}")
 
     # 3. CONSOLIDATE
+    hidden_cost = float(total_csv_pnl) - net_settlement
+
+    # Calculate Version Net
+    for v in versions:
+        v_data = version_data[v]
+        v_trades = v_data['trades']
+        if total_trades > 0:
+            v_hidden_allocation = hidden_cost * (v_trades / total_trades)
+        else:
+            v_hidden_allocation = 0
+            
+        v_data['net_pnl'] = round(v_data['pnl'] - v_hidden_allocation, 2)
+        v_data['charges'] = round(v_hidden_allocation, 2)
+
     reconciliation = {
         'last_updated': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
         'total_trades': total_trades,

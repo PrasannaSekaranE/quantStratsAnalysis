@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-04-08 15:48:37",
+  "last_updated": "2026-04-08 16:16:03",
   "total_trades": 101,
   "csv_execution_pnl": 151.59,
   "execution_slippage": 70174.0,
@@ -12,17 +12,23 @@
     "V1": {
       "trades": 44,
       "pnl": 107.9,
-      "slippage": 70174.0
+      "slippage": 70174.0,
+      "net_pnl": -10331.2,
+      "charges": 10439.1
     },
     "V2": {
       "trades": 25,
       "pnl": 92.09,
-      "slippage": 0.0
+      "slippage": 0.0,
+      "net_pnl": -5839.22,
+      "charges": 5931.31
     },
     "V2 Upgrade": {
       "trades": 32,
       "pnl": -48.4,
-      "slippage": 0.0
+      "slippage": 0.0,
+      "net_pnl": -7640.47,
+      "charges": 7592.07
     }
   }
 }

@@ -730,17 +730,25 @@ async function loadLiveVersion(githubSubPath, filePattern, normaliser, startingC
 function normaliseV1(row) {
   const signal = (row.signal_type || '').toUpperCase();
   const pnl = parseFloat(row.total_pnl) || 0;
+  
+  const scan_entry = parseFloat(row.scan_entry_price) || 0;
+  const entry_price = parseFloat(row.entry_price) || 0;
+  const quantity = parseInt(row.quantity) || 0;
+  const slippage = (scan_entry && entry_price) ? ((entry_price - scan_entry) * quantity) : 0;
+
   return {
     entry_time: row.entry_time || '',
     exit_time: row.exit_time || '',
     symbol: row.kite_symbol || '',
     direction: signal === 'BEARISH' ? 'PUT' : 'CALL',
     option_type: row.option_type || '',
-    entry_price: parseFloat(row.entry_price) || 0,
+    entry_price: entry_price,
+    scan_entry_price: scan_entry,
     exit_price: parseFloat(row.exit_price) || 0,
     lots: parseInt(row.lots) || 0,
-    quantity: parseInt(row.quantity) || 0,
+    quantity: quantity,
     total_pnl: pnl,
+    slippage: Math.round(slippage * 100) / 100,
     pnl_pct: parseFloat(row.pnl_pct) || 0,
     exit_reason: row.exit_reason || '',
     status: row.status || '',
@@ -752,17 +760,25 @@ function normaliseV1(row) {
 function normaliseV2(row) {
   const signal = (row.signal_type || '').toUpperCase();
   const pnl = parseFloat(row.total_pnl) || 0;
+  
+  const scan_entry = parseFloat(row.scan_entry_price) || 0;
+  const entry_price = parseFloat(row.entry_price) || 0;
+  const quantity = parseInt(row.quantity) || 0;
+  const slippage = (scan_entry && entry_price) ? ((entry_price - scan_entry) * quantity) : 0;
+
   return {
     entry_time: row.entry_time || '',
     exit_time: row.exit_time || '',
     symbol: row.tradingsymbol || '',
     direction: signal === 'BEARISH' ? 'PUT' : 'CALL',
     option_type: row.option_type || row.option_type || '',
-    entry_price: parseFloat(row.entry_price) || 0,
+    entry_price: entry_price,
+    scan_entry_price: scan_entry,
     exit_price: parseFloat(row.exit_price) || 0,
     lots: parseInt(row.lots) || 0,
-    quantity: parseInt(row.quantity) || 0,
+    quantity: quantity,
     total_pnl: pnl,
+    slippage: Math.round(slippage * 100) / 100,
     pnl_pct: parseFloat(row.pnl_pct) || 0,
     exit_reason: row.exit_reason || '',
     status: row.status || '',

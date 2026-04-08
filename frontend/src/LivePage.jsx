@@ -163,27 +163,35 @@ const ReconciliationView = ({ data }) => {
                                 <th className="px-6 py-3 font-bold text-gray-500 uppercase">Version</th>
                                 <th className="px-6 py-3 font-bold text-gray-500 uppercase">Trades</th>
                                 <th className="px-6 py-3 font-bold text-gray-500 uppercase">Gross Profit</th>
-                                <th className="px-6 py-3 font-bold text-red-500 uppercase">Slippage Cost</th>
+                                <th className="px-6 py-3 font-bold text-red-500 uppercase">Slippage</th>
+                                <th className="px-6 py-3 font-bold text-orange-500 uppercase">Charges</th>
+                                <th className="px-6 py-3 font-bold text-emerald-500 uppercase">Net P&L</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr className="border-b hover:bg-gray-50">
                                 <td className="px-6 py-4 font-bold text-gray-700">V1 (40% SL)</td>
                                 <td className="px-6 py-4">{v1.trades}</td>
-                                <td className="px-6 py-4 font-bold text-emerald-600">₹{v1.pnl.toLocaleString()}</td>
-                                <td className="px-6 py-4 font-bold text-red-500">-₹{v1.slippage.toLocaleString()}</td>
+                                <td className="px-6 py-4 font-bold text-blue-600">₹{(v1.pnl || 0).toLocaleString()}</td>
+                                <td className="px-6 py-4 font-bold text-red-500">-₹{(v1.slippage || 0).toLocaleString()}</td>
+                                <td className="px-6 py-4 font-bold text-orange-500">-₹{(v1.charges || 0).toLocaleString()}</td>
+                                <td className={`px-6 py-4 font-black ${(v1.net_pnl || 0) >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>₹{(v1.net_pnl || 0).toLocaleString()}</td>
                             </tr>
                             <tr className="border-b hover:bg-gray-50">
                                 <td className="px-6 py-4 font-bold text-gray-700">V2 (25% SL)</td>
                                 <td className="px-6 py-4">{v2.trades}</td>
-                                <td className="px-6 py-4 font-bold text-emerald-600">₹{v2.pnl.toLocaleString()}</td>
-                                <td className="px-6 py-4 font-bold text-red-500">-₹{v2.slippage.toLocaleString()}</td>
+                                <td className="px-6 py-4 font-bold text-blue-600">₹{(v2.pnl || 0).toLocaleString()}</td>
+                                <td className="px-6 py-4 font-bold text-red-500">-₹{(v2.slippage || 0).toLocaleString()}</td>
+                                <td className="px-6 py-4 font-bold text-orange-500">-₹{(v2.charges || 0).toLocaleString()}</td>
+                                <td className={`px-6 py-4 font-black ${(v2.net_pnl || 0) >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>₹{(v2.net_pnl || 0).toLocaleString()}</td>
                             </tr>
                             <tr className="border-b hover:bg-gray-50">
                                 <td className="px-6 py-4 font-bold text-gray-700">V2 Upgrade</td>
                                 <td className="px-6 py-4">{v3.trades}</td>
-                                <td className={`px-6 py-4 font-bold ${v3.pnl >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>₹{v3.pnl.toLocaleString()}</td>
-                                <td className="px-6 py-4 font-bold text-red-500">-₹{v3.slippage.toLocaleString()}</td>
+                                <td className={`px-6 py-4 font-bold ${(v3.pnl || 0) >= 0 ? 'text-blue-600' : 'text-red-500'}`}>₹{(v3.pnl || 0).toLocaleString()}</td>
+                                <td className="px-6 py-4 font-bold text-red-500">-₹{(v3.slippage || 0).toLocaleString()}</td>
+                                <td className="px-6 py-4 font-bold text-orange-500">-₹{(v3.charges || 0).toLocaleString()}</td>
+                                <td className={`px-6 py-4 font-black ${(v3.net_pnl || 0) >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>₹{(v3.net_pnl || 0).toLocaleString()}</td>
                             </tr>
                         </tbody>
                     </table>
@@ -572,6 +580,7 @@ const LivePage = () => {
                                             { k: 'symbol', l: 'Instrument' },
                                             { k: 'direction', l: 'Dir' },
                                             { k: 'entry_price', l: 'Entry' },
+                                            { k: 'slippage', l: 'Slip Cost' },
                                             { k: 'exit_price', l: 'Exit' },
                                             { k: 'total_pnl', l: 'Gross P&L' },
                                             { k: 'ending_capital', l: 'Capital' },
@@ -619,7 +628,13 @@ const LivePage = () => {
                                                         {t.direction} {t.option_type}
                                                     </span>
                                                 </td>
-                                                <td className="px-6 py-4 font-bold text-gray-600">₹{t.entry_price.toFixed(2)}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <div className="font-bold text-gray-600">₹{t.entry_price.toFixed(2)}</div>
+                                                    {t.scan_entry_price > 0 && <div className="text-[10px] text-gray-400 font-bold">SCAN: ₹{t.scan_entry_price.toFixed(2)}</div>}
+                                                </td>
+                                                <td className="px-6 py-4 font-bold text-red-500">
+                                                    {t.slippage > 0 ? `-₹${t.slippage.toFixed(2)}` : '—'}
+                                                </td>
                                                 <td className="px-6 py-4 font-bold text-gray-600">₹{t.exit_price.toFixed(2)}</td>
                                                 <td className={`px-6 py-4 font-black ${isWin ? 'text-emerald-600' : 'text-red-500'}`}>
                                                     {formatPnL(t.total_pnl)}
