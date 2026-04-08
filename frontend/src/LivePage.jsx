@@ -79,9 +79,128 @@ const BarLoader = () => (
     </div>
 );
 
+/* ── Reconciliation Component ── */
+const ReconciliationView = ({ data }) => {
+    if (!data) return <div className="p-8 text-center text-gray-500">No reconciliation data available. Please run sync script.</div>;
+
+    const v1 = data.version_breakdown?.V1 || { pnl: 0, slippage: 0, trades: 0 };
+    const v2 = data.version_breakdown?.V2 || { pnl: 0, slippage: 0, trades: 0 };
+    const v3 = data.version_breakdown?.['V2 Upgrade'] || { pnl: 0, slippage: 0, trades: 0 };
+
+    return (
+        <div className="space-y-6">
+            {/* Top Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-white rounded-2xl p-6 shadow-xl border-l-4 border-blue-500">
+                    <h3 className="text-gray-500 text-sm font-bold uppercase tracking-wide mb-2">CSV Display P&L (Gross)</h3>
+                    <p className="text-3xl font-black text-blue-600">₹{data.csv_execution_pnl.toLocaleString()}</p>
+                    <p className="text-xs text-gray-400 mt-2">What the dashboard typically shows (based on execution fills)</p>
+                </div>
+                <div className="bg-white rounded-2xl p-6 shadow-xl border-l-4 border-orange-500">
+                    <h3 className="text-gray-500 text-sm font-bold uppercase tracking-wide mb-2">Broker Charges & Taxes</h3>
+                    <p className="text-3xl font-black text-orange-600">-₹{data.broker_charges.toLocaleString()}</p>
+                    <p className="text-xs text-gray-400 mt-2">Statutory charges from broker ledger</p>
+                </div>
+                <div className="bg-white rounded-2xl p-6 shadow-xl border-l-4 border-emerald-500">
+                    <h3 className="text-gray-500 text-sm font-bold uppercase tracking-wide mb-2">Real Net P&L (In Pouch)</h3>
+                    <p className={`text-4xl font-black ${data.net_realized_pnl >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                        ₹{data.net_realized_pnl.toLocaleString()}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-2">Actual settlement after all charges</p>
+                </div>
+            </div>
+
+            {/* Waterfall Breakdown */}
+            <div className="bg-white rounded-2xl shadow-xl p-8">
+                <h3 className="text-2xl font-black text-gray-800 mb-6">P&L Reconciliation Breakdown</h3>
+                
+                <div className="space-y-4">
+                    <div className="flex justify-between items-center p-4 bg-gray-50 rounded-xl">
+                        <span className="font-bold text-gray-600">Theoretical Signal P&L (No Slippage)</span>
+                        <span className="font-black text-emerald-600">₹{(data.theoretical_signal_pnl || 0).toLocaleString()}</span>
+                    </div>
+                    
+                    <div className="flex justify-between items-center p-4 bg-red-50 rounded-xl">
+                        <span className="font-bold text-gray-600">Execution Entry Slippage</span>
+                        <span className="font-black text-red-500">-₹{(data.execution_slippage || 0).toLocaleString()}</span>
+                    </div>
+
+                    <div className="flex justify-between items-center p-4 bg-blue-50 rounded-xl border-l-4 border-blue-500">
+                        <span className="font-bold text-blue-800">CSV Dashboard P&L (Fill to Fill)</span>
+                        <span className="font-black text-blue-600">₹{(data.csv_execution_pnl || 0).toLocaleString()}</span>
+                    </div>
+
+                    <div className="flex justify-between items-center p-4 bg-orange-50 rounded-xl">
+                        <span className="font-bold text-gray-600">Brokerage, STT & Charges (Ledger)</span>
+                        <span className="font-black text-orange-500">-₹{(data.broker_charges || 0).toLocaleString()}</span>
+                    </div>
+                    
+                    <div className="flex justify-between items-center p-4 bg-red-50 border border-red-100 rounded-xl">
+                        <span className="font-bold text-gray-600">Exit Slippage & Missing Logs</span>
+                        <span className="font-black text-red-500">
+                            -₹{((data.csv_execution_pnl - data.broker_charges) - data.net_realized_pnl).toLocaleString()}
+                        </span>
+                    </div>
+
+                    <div className="flex justify-between items-center p-6 bg-gray-800 rounded-xl text-white">
+                        <span className="font-black text-xl">Final Net Settled P&L</span>
+                        <span className={`font-black text-2xl ${data.net_realized_pnl >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                            ₹{(data.net_realized_pnl || 0).toLocaleString()}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Version Slippage Table */}
+            <div className="bg-white rounded-2xl shadow-xl overflow-hidden p-6">
+                <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <Activity size={20} className="text-blue-500"/> Slippage by Version
+                </h3>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                        <thead>
+                            <tr className="bg-gray-50 border-b">
+                                <th className="px-6 py-3 font-bold text-gray-500 uppercase">Version</th>
+                                <th className="px-6 py-3 font-bold text-gray-500 uppercase">Trades</th>
+                                <th className="px-6 py-3 font-bold text-gray-500 uppercase">Gross Profit</th>
+                                <th className="px-6 py-3 font-bold text-red-500 uppercase">Slippage Cost</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr className="border-b hover:bg-gray-50">
+                                <td className="px-6 py-4 font-bold text-gray-700">V1 (40% SL)</td>
+                                <td className="px-6 py-4">{v1.trades}</td>
+                                <td className="px-6 py-4 font-bold text-emerald-600">₹{v1.pnl.toLocaleString()}</td>
+                                <td className="px-6 py-4 font-bold text-red-500">-₹{v1.slippage.toLocaleString()}</td>
+                            </tr>
+                            <tr className="border-b hover:bg-gray-50">
+                                <td className="px-6 py-4 font-bold text-gray-700">V2 (25% SL)</td>
+                                <td className="px-6 py-4">{v2.trades}</td>
+                                <td className="px-6 py-4 font-bold text-emerald-600">₹{v2.pnl.toLocaleString()}</td>
+                                <td className="px-6 py-4 font-bold text-red-500">-₹{v2.slippage.toLocaleString()}</td>
+                            </tr>
+                            <tr className="border-b hover:bg-gray-50">
+                                <td className="px-6 py-4 font-bold text-gray-700">V2 Upgrade</td>
+                                <td className="px-6 py-4">{v3.trades}</td>
+                                <td className={`px-6 py-4 font-bold ${v3.pnl >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>₹{v3.pnl.toLocaleString()}</td>
+                                <td className="px-6 py-4 font-bold text-red-500">-₹{v3.slippage.toLocaleString()}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div className="text-right text-xs text-gray-400">
+                Last synced with Ledger: {data.last_updated}
+            </div>
+        </div>
+    );
+};
+
 /* ── Main Component ── */
 const LivePage = () => {
     const [data, setData] = useState(null);
+    const [reconciliationData, setReconciliationData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [activeVersion, setActiveVersion] = useState('ALL'); // 'ALL', 'V1', 'V1_1', 'V2_UPGRADE'
@@ -92,10 +211,23 @@ const LivePage = () => {
         setLoading(true);
         setError(null);
         try {
-            const res = await fetch(`${API_BASE_URL}/live-trades`);
-            const json = await res.json();
-            if (json.success) setData(json);
-            else setError(json.error || 'Failed to load live trades');
+            const [liveTradesRes, reconRes] = await Promise.allSettled([
+                fetch(`${API_BASE_URL}/live-trades`),
+                fetch(`${API_BASE_URL}/gblast-reconciliation`)
+            ]);
+
+            if (liveTradesRes.status === 'fulfilled') {
+                const liveJson = await liveTradesRes.value.json();
+                if (liveJson.success) setData(liveJson);
+                else setError(liveJson.error || 'Failed to load live trades');
+            } else {
+                setError('Failed to connect to backend.');
+            }
+
+            if (reconRes.status === 'fulfilled') {
+                const reconJson = await reconRes.value.json();
+                if (reconJson.success) setReconciliationData(reconJson.data);
+            }
         } catch (e) {
             setError('Cannot connect to backend. Make sure it is running.');
         } finally {
@@ -273,7 +405,8 @@ const LivePage = () => {
                     { id: 'ALL', label: 'All Live', subtitle: 'Portfolio' },
                     { id: 'V1', label: 'V1 (40% SL)', subtitle: 'Live' },
                     { id: 'V1_1', label: 'V1.1 (25% SL)', subtitle: 'Discontinued' },
-                    { id: 'V2_UPGRADE', label: 'V2 Upgrade', subtitle: 'Live' }
+                    { id: 'V2_UPGRADE', label: 'V2 Upgrade', subtitle: 'Live' },
+                    { id: 'RECONCILIATION', label: 'Net Reconciliation', subtitle: 'Slippage & Charges' }
                 ].map((v) => (
                     <button
                         key={v.id}
@@ -297,217 +430,224 @@ const LivePage = () => {
                 ))}
             </div>
 
-            {/* Date Filter Banner */}
-            {selectedDate !== 'ALL' && (
-                <div className="mb-4 px-6 py-3 rounded-xl flex items-center gap-3"
-                    style={{ background: 'linear-gradient(135deg, rgba(31, 168, 166, 0.1) 0%, rgba(23, 98, 199, 0.1) 100%)', border: '2px solid rgba(23, 98, 199, 0.3)' }}>
-                    <Calendar size={20} style={{ color: '#1762C7' }} />
-                    <span className="font-semibold" style={{ color: '#1762C7' }}>
-                        Statistics filtered for: {formatDate(selectedDate)}
-                    </span>
-                    <button
-                        onClick={() => setSelectedDate('ALL')}
-                        className="ml-auto px-4 py-1 rounded-lg text-white font-semibold text-sm transition-all transform hover:scale-105"
-                        style={{ background: 'linear-gradient(135deg, rgb(31, 168, 166) 0%, rgb(23, 98, 199) 100%)' }}
-                    >
-                        Show Overall Stats
-                    </button>
-                </div>
-            )}
-
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                {/* Total Trades */}
-                <div className="bg-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="p-3 rounded-xl" style={{ background: 'linear-gradient(135deg, #1762C7 0%, #1FA8A6 100%)' }}>
-                            <BarChart3 className="text-white" size={28} />
+            {/* Main Content Area */}
+            {activeVersion === 'RECONCILIATION' ? (
+                <ReconciliationView data={reconciliationData} />
+            ) : (
+                <>
+                    {/* Date Filter Banner */}
+                    {selectedDate !== 'ALL' && (
+                        <div className="mb-4 px-6 py-3 rounded-xl flex items-center gap-3"
+                            style={{ background: 'linear-gradient(135deg, rgba(31, 168, 166, 0.1) 0%, rgba(23, 98, 199, 0.1) 100%)', border: '2px solid rgba(23, 98, 199, 0.3)' }}>
+                            <Calendar size={20} style={{ color: '#1762C7' }} />
+                            <span className="font-semibold" style={{ color: '#1762C7' }}>
+                                Statistics filtered for: {formatDate(selectedDate)}
+                            </span>
+                            <button
+                                onClick={() => setSelectedDate('ALL')}
+                                className="ml-auto px-4 py-1 rounded-lg text-white font-semibold text-sm transition-all transform hover:scale-105"
+                                style={{ background: 'linear-gradient(135deg, rgb(31, 168, 166) 0%, rgb(23, 98, 199) 100%)' }}
+                            >
+                                Show Overall Stats
+                            </button>
                         </div>
-                        <Activity className="text-gray-400" size={24} />
-                    </div>
-                    <h3 className="text-gray-500 text-sm font-semibold mb-2 uppercase tracking-wide">Total Trades</h3>
-                    <p className="text-4xl font-bold mb-2" style={{ color: '#1762C7' }}>{currentStats.totalTrades}</p>
-                    <div className="flex gap-3 text-xs mt-3">
-                        <span className="text-emerald-600 font-bold">✓ {currentStats.winners}</span>
-                        <span className="text-red-600 font-bold">✗ {currentStats.losers}</span>
-                        <span className="text-gray-400 font-bold">⊗ 0</span>
-                    </div>
-                </div>
+                    )}
 
-                {/* Net P&L */}
-                <div className="bg-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className={`p-3 rounded-xl ${currentStats.totalPnL >= 0 ? 'bg-emerald-500' : 'bg-red-500'}`}>
-                            <IndianRupee className="text-white" size={28} />
-                        </div>
-                        {currentStats.totalPnL >= 0 ?
-                            <ArrowUpRight className="text-emerald-500" size={28} /> :
-                            <ArrowDownRight className="text-red-500" size={28} />
-                        }
-                    </div>
-                    <h3 className="text-gray-500 text-sm font-semibold mb-2 uppercase tracking-wide">Net P&L</h3>
-                    <p className={`text-4xl font-bold mb-2 ${currentStats.totalPnL >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                        {formatPnL(currentStats.totalPnL)}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-3">
-                        Avg per trade: <span className={`font-semibold ${currentStats.avgPnL >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                            {formatPnL(currentStats.avgPnL)}
-                        </span>
-                    </p>
-                </div>
-
-                {/* Win Rate */}
-                <div className="bg-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="p-3 rounded-xl" style={{ background: 'linear-gradient(135deg, #1762C7 0%, #1FA8A6 100%)' }}>
-                            <Target className="text-white" size={28} />
-                        </div>
-                        <div className="text-right">
-                            <div className="w-16 h-16 rounded-full border-4 flex items-center justify-center" style={{ borderColor: '#1762C7' }}>
-                                <span className="text-lg font-bold" style={{ color: '#1762C7' }}>
-                                    {currentStats.winRate.toFixed(0)}%
-                                </span>
+                    {/* Stats Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        {/* Total Trades */}
+                        <div className="bg-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="p-3 rounded-xl" style={{ background: 'linear-gradient(135deg, #1762C7 0%, #1FA8A6 100%)' }}>
+                                    <BarChart3 className="text-white" size={28} />
+                                </div>
+                                <Activity className="text-gray-400" size={24} />
+                            </div>
+                            <h3 className="text-gray-500 text-sm font-semibold mb-2 uppercase tracking-wide">Total Trades</h3>
+                            <p className="text-4xl font-bold mb-2" style={{ color: '#1762C7' }}>{currentStats.totalTrades}</p>
+                            <div className="flex gap-3 text-xs mt-3">
+                                <span className="text-emerald-600 font-bold">✓ {currentStats.winners}</span>
+                                <span className="text-red-600 font-bold">✗ {currentStats.losers}</span>
+                                <span className="text-gray-400 font-bold">⊗ 0</span>
                             </div>
                         </div>
-                    </div>
-                    <h3 className="text-gray-500 text-sm font-semibold mb-2 uppercase tracking-wide">Win Rate</h3>
-                    <p className="text-4xl font-bold" style={{ color: '#1762C7' }}>
-                        {currentStats.winRate.toFixed(1)}%
-                    </p>
-                </div>
 
-                {/* Current Capital */}
-                <div className="bg-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="p-3 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700">
-                            <TrendingUp className="text-white" size={28} />
+                        {/* Net P&L */}
+                        <div className="bg-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+                            <div className="flex items-center justify-between mb-4">
+                                <div className={`p-3 rounded-xl ${currentStats.totalPnL >= 0 ? 'bg-emerald-500' : 'bg-red-500'}`}>
+                                    <IndianRupee className="text-white" size={28} />
+                                </div>
+                                {currentStats.totalPnL >= 0 ?
+                                    <ArrowUpRight className="text-emerald-500" size={28} /> :
+                                    <ArrowDownRight className="text-red-500" size={28} />
+                                }
+                            </div>
+                            <h3 className="text-gray-500 text-sm font-semibold mb-2 uppercase tracking-wide">Gross P&L</h3>
+                            <p className={`text-4xl font-bold mb-2 ${currentStats.totalPnL >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                                {formatPnL(currentStats.totalPnL)}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-3">
+                                Avg per trade: <span className={`font-semibold ${currentStats.avgPnL >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                                    {formatPnL(currentStats.avgPnL)}
+                                </span>
+                            </p>
                         </div>
-                        <span className={`text-xs font-bold px-2 py-1 rounded-lg ${currentStats.totalPnL >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
-                            {(currentStats.totalPnL / currentStats.initialCapital * 100).toFixed(1)}% Return
-                        </span>
+
+                        {/* Win Rate */}
+                        <div className="bg-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="p-3 rounded-xl" style={{ background: 'linear-gradient(135deg, #1762C7 0%, #1FA8A6 100%)' }}>
+                                    <Target className="text-white" size={28} />
+                                </div>
+                                <div className="text-right">
+                                    <div className="w-16 h-16 rounded-full border-4 flex items-center justify-center" style={{ borderColor: '#1762C7' }}>
+                                        <span className="text-lg font-bold" style={{ color: '#1762C7' }}>
+                                            {currentStats.winRate.toFixed(0)}%
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <h3 className="text-gray-500 text-sm font-semibold mb-2 uppercase tracking-wide">Win Rate</h3>
+                            <p className="text-4xl font-bold" style={{ color: '#1762C7' }}>
+                                {currentStats.winRate.toFixed(1)}%
+                            </p>
+                        </div>
+
+                        {/* Current Capital */}
+                        <div className="bg-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="p-3 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700">
+                                    <TrendingUp className="text-white" size={28} />
+                                </div>
+                                <span className={`text-xs font-bold px-2 py-1 rounded-lg ${currentStats.totalPnL >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                                    {(currentStats.totalPnL / currentStats.initialCapital * 100).toFixed(1)}% Return
+                                </span>
+                            </div>
+                            <h3 className="text-gray-500 text-sm font-semibold mb-2 uppercase tracking-wide">Gross Capital</h3>
+                            <p className="text-4xl font-bold text-gray-800">{formatCurRaw(currentStats.capital)}</p>
+                            <p className="text-xs text-gray-500 mt-3">
+                                Initial: {formatCurRaw(currentStats.initialCapital)}
+                            </p>
+                        </div>
                     </div>
-                    <h3 className="text-gray-500 text-sm font-semibold mb-2 uppercase tracking-wide">Current Capital</h3>
-                    <p className="text-4xl font-bold text-gray-800">{formatCurRaw(currentStats.capital)}</p>
-                    <p className="text-xs text-gray-500 mt-3">
-                        Initial: {formatCurRaw(currentStats.initialCapital)}
-                    </p>
-                </div>
-            </div>
 
-            {/* Date Selection - Calendar Input */}
-            <div className="mb-8 flex items-center gap-4 bg-white p-4 rounded-2xl shadow-sm">
-                <div className="flex items-center gap-2 px-4 border-r border-gray-100">
-                    <Calendar size={20} className="text-gray-400" />
-                    <span className="font-bold text-gray-700 whitespace-nowrap">Filter by Date</span>
-                </div>
-                <div className="flex-1 flex items-center gap-3">
-                    <input
-                        type="date"
-                        value={selectedDate === 'ALL' ? '' : selectedDate}
-                        onChange={(e) => setSelectedDate(e.target.value || 'ALL')}
-                        className="bg-transparent outline-none font-semibold text-gray-600 cursor-pointer border rounded-lg px-4 py-1 focus:ring-2 focus:ring-blue-100 transition-all"
-                        style={{ color: '#1762C7', borderColor: '#eef2ff' }}
-                    />
-                    {selectedDate !== 'ALL' && (
-                        <button
-                            onClick={() => setSelectedDate('ALL')}
-                            className="bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-1 rounded-lg text-xs font-bold transition-all"
-                        >
-                            CLEAR
-                        </button>
-                    )}
-                </div>
-                <div className="text-sm text-gray-400 font-medium px-4">
-                    {processedTrades.length} Trades Found
-                </div>
-            </div>
+                    {/* Date Selection - Calendar Input */}
+                    <div className="mb-8 flex items-center gap-4 bg-white p-4 rounded-2xl shadow-sm">
+                        <div className="flex items-center gap-2 px-4 border-r border-gray-100">
+                            <Calendar size={20} className="text-gray-400" />
+                            <span className="font-bold text-gray-700 whitespace-nowrap">Filter by Date</span>
+                        </div>
+                        <div className="flex-1 flex items-center gap-3">
+                            <input
+                                type="date"
+                                value={selectedDate === 'ALL' ? '' : selectedDate}
+                                onChange={(e) => setSelectedDate(e.target.value || 'ALL')}
+                                className="bg-transparent outline-none font-semibold text-gray-600 cursor-pointer border rounded-lg px-4 py-1 focus:ring-2 focus:ring-blue-100 transition-all"
+                                style={{ color: '#1762C7', borderColor: '#eef2ff' }}
+                            />
+                            {selectedDate !== 'ALL' && (
+                                <button
+                                    onClick={() => setSelectedDate('ALL')}
+                                    className="bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-1 rounded-lg text-xs font-bold transition-all"
+                                >
+                                    CLEAR
+                                </button>
+                            )}
+                        </div>
+                        <div className="text-sm text-gray-400 font-medium px-4">
+                            {processedTrades.length} Trades Found
+                        </div>
+                    </div>
 
-            {/* Trades Table */}
-            <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left">
-                        <thead>
-                            <tr style={{ background: 'linear-gradient(135deg, #f8faff 0%, #eef2ff 100%)' }}>
-                                {[
-                                    { k: 'trade_no', l: '#' },
-                                    { k: 'entry_time', l: 'Time' },
-                                    { k: 'symbol', l: 'Instrument' },
-                                    { k: 'direction', l: 'Dir' },
-                                    { k: 'entry_price', l: 'Entry' },
-                                    { k: 'exit_price', l: 'Exit' },
-                                    { k: 'total_pnl', l: 'P&L' },
-                                    { k: 'ending_capital', l: 'Capital' },
-                                    { k: 'return_pct', l: 'Ret%' },
-                                    { k: 'exit_reason', l: 'Outcome' }
-                                ].map(h => (
-                                    <th
-                                        key={h.k}
-                                        onClick={() => handleSort(h.k)}
-                                        className="px-6 py-5 text-sm font-bold uppercase tracking-wider text-gray-500 cursor-pointer hover:text-blue-600 transition-colors group"
-                                    >
-                                        <div className="flex items-center gap-1">
-                                            {h.l}
-                                            <div className="flex flex-col opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <ChevronUp size={10} className={sortConfig.key === h.k && sortConfig.direction === 'asc' ? 'text-blue-600' : 'text-gray-300'} />
-                                                <ChevronDown size={10} className={sortConfig.key === h.k && sortConfig.direction === 'desc' ? 'text-blue-600' : 'text-gray-300'} />
-                                            </div>
-                                            {sortConfig.key === h.k && (
-                                                <div className="flex flex-col">
-                                                    {sortConfig.direction === 'asc' ? <ChevronUp size={10} className="text-blue-600" /> : <ChevronDown size={10} className="text-blue-600" />}
+                    {/* Trades Table */}
+                    <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left">
+                                <thead>
+                                    <tr style={{ background: 'linear-gradient(135deg, #f8faff 0%, #eef2ff 100%)' }}>
+                                        {[
+                                            { k: 'trade_no', l: '#' },
+                                            { k: 'entry_time', l: 'Time' },
+                                            { k: 'symbol', l: 'Instrument' },
+                                            { k: 'direction', l: 'Dir' },
+                                            { k: 'entry_price', l: 'Entry' },
+                                            { k: 'exit_price', l: 'Exit' },
+                                            { k: 'total_pnl', l: 'Gross P&L' },
+                                            { k: 'ending_capital', l: 'Capital' },
+                                            { k: 'return_pct', l: 'Ret%' },
+                                            { k: 'exit_reason', l: 'Outcome' }
+                                        ].map(h => (
+                                            <th
+                                                key={h.k}
+                                                onClick={() => handleSort(h.k)}
+                                                className="px-6 py-5 text-sm font-bold uppercase tracking-wider text-gray-500 cursor-pointer hover:text-blue-600 transition-colors group"
+                                            >
+                                                <div className="flex items-center gap-1">
+                                                    {h.l}
+                                                    <div className="flex flex-col opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <ChevronUp size={10} className={sortConfig.key === h.k && sortConfig.direction === 'asc' ? 'text-blue-600' : 'text-gray-300'} />
+                                                        <ChevronDown size={10} className={sortConfig.key === h.k && sortConfig.direction === 'desc' ? 'text-blue-600' : 'text-gray-300'} />
+                                                    </div>
+                                                    {sortConfig.key === h.k && (
+                                                        <div className="flex flex-col">
+                                                            {sortConfig.direction === 'asc' ? <ChevronUp size={10} className="text-blue-600" /> : <ChevronDown size={10} className="text-blue-600" />}
+                                                        </div>
+                                                    )}
                                                 </div>
-                                            )}
-                                        </div>
-                                    </th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {processedTrades.map((t, i) => {
-                                const isWin = (t.total_pnl || 0) > 0;
-                                return (
-                                    <tr key={i} className="border-b border-gray-50 hover:bg-blue-50/30 transition-colors">
-                                        <td className="px-6 py-4 font-bold text-gray-400">{t.trade_no || i + 1}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="font-bold text-gray-700">{formatDate(t.date)}</div>
-                                            <div className="text-[10px] text-gray-400 uppercase font-bold">{formatTime(t.entry_time)}</div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="font-black text-gray-800">{t.symbol}</div>
-                                            {activeVersion === 'ALL' && <div className="text-[10px] font-bold text-blue-500 uppercase">{t.version}</div>}
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`px-3 py-1 rounded-lg text-[10px] font-black tracking-widest ${t.direction === 'CALL' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
-                                                }`}>
-                                                {t.direction} {t.option_type}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 font-bold text-gray-600">₹{t.entry_price.toFixed(2)}</td>
-                                        <td className="px-6 py-4 font-bold text-gray-600">₹{t.exit_price.toFixed(2)}</td>
-                                        <td className={`px-6 py-4 font-black ${isWin ? 'text-emerald-600' : 'text-red-500'}`}>
-                                            {formatPnL(t.total_pnl)}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-gray-400 text-[10px] font-bold">START: {formatCurRaw(t.starting_capital)}</div>
-                                            <div className="font-black text-blue-600">{formatCurRaw(t.ending_capital)}</div>
-                                        </td>
-                                        <td className={`px-6 py-4 font-black text-xs ${isWin ? 'text-emerald-500' : 'text-red-500'}`}>
-                                            {isWin ? '+' : ''}{t.return_pct}%
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${t.exit_reason?.includes('TARGET') ? 'bg-emerald-50 text-emerald-600' :
-                                                t.exit_reason?.includes('STOP') ? 'bg-red-50 text-red-600' :
-                                                    'bg-gray-100 text-gray-500'
-                                                }`}>
-                                                {t.exit_reason || '—'}
-                                            </span>
-                                        </td>
+                                            </th>
+                                        ))}
                                     </tr>
-                                );
-                            })}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+                                </thead>
+                                <tbody>
+                                    {processedTrades.map((t, i) => {
+                                        const isWin = (t.total_pnl || 0) > 0;
+                                        return (
+                                            <tr key={i} className="border-b border-gray-50 hover:bg-blue-50/30 transition-colors">
+                                                <td className="px-6 py-4 font-bold text-gray-400">{t.trade_no || i + 1}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <div className="font-bold text-gray-700">{formatDate(t.date)}</div>
+                                                    <div className="text-[10px] text-gray-400 uppercase font-bold">{formatTime(t.entry_time)}</div>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <div className="font-black text-gray-800">{t.symbol}</div>
+                                                    {activeVersion === 'ALL' && <div className="text-[10px] font-bold text-blue-500 uppercase">{t.version}</div>}
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <span className={`px-3 py-1 rounded-lg text-[10px] font-black tracking-widest ${t.direction === 'CALL' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
+                                                        }`}>
+                                                        {t.direction} {t.option_type}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 font-bold text-gray-600">₹{t.entry_price.toFixed(2)}</td>
+                                                <td className="px-6 py-4 font-bold text-gray-600">₹{t.exit_price.toFixed(2)}</td>
+                                                <td className={`px-6 py-4 font-black ${isWin ? 'text-emerald-600' : 'text-red-500'}`}>
+                                                    {formatPnL(t.total_pnl)}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <div className="text-gray-400 text-[10px] font-bold">START: {formatCurRaw(t.starting_capital)}</div>
+                                                    <div className="font-black text-blue-600">{formatCurRaw(t.ending_capital)}</div>
+                                                </td>
+                                                <td className={`px-6 py-4 font-black text-xs ${isWin ? 'text-emerald-500' : 'text-red-500'}`}>
+                                                    {isWin ? '+' : ''}{t.return_pct}%
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <span className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${t.exit_reason?.includes('TARGET') ? 'bg-emerald-50 text-emerald-600' :
+                                                        t.exit_reason?.includes('STOP') ? 'bg-red-50 text-red-600' :
+                                                            'bg-gray-100 text-gray-500'
+                                                        }`}>
+                                                        {t.exit_reason || '—'}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </>
+            )}
         </div>
     );
 };

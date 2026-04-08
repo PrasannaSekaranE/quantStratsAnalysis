@@ -1,0 +1,28 @@
+{
+  "last_updated": "2026-04-08 15:48:37",
+  "total_trades": 101,
+  "csv_execution_pnl": 151.59,
+  "execution_slippage": 70174.0,
+  "theoretical_signal_pnl": 70325.59,
+  "broker_realized_pnl": -7159.75,
+  "broker_charges": 16651.14,
+  "net_realized_pnl": -23810.89,
+  "reconciliation_gap": -23962.48,
+  "version_breakdown": {
+    "V1": {
+      "trades": 44,
+      "pnl": 107.9,
+      "slippage": 70174.0
+    },
+    "V2": {
+      "trades": 25,
+      "pnl": 92.09,
+      "slippage": 0.0
+    },
+    "V2 Upgrade": {
+      "trades": 32,
+      "pnl": -48.4,
+      "slippage": 0.0
+    }
+  }
+}

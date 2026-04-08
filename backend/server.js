@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const https = require('https');
 const csv = require('csv-parser');
+const fs = require('fs');
+const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -838,7 +840,26 @@ module.exports = app;
 
 // For local development
 if (process.env.NODE_ENV !== 'production') {
-  app.listen(PORT, () => {
+  /**
+ * GET /api/gblast-reconciliation
+ * Returns consolidated reconciliation data for G-Blast Live
+ */
+app.get('/api/gblast-reconciliation', (req, res) => {
+  const filePath = path.join(__dirname, '..', 'trades', 'G - BLAST - LIVE', 'gblast_live_reconciliation.json');
+  
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ success: false, error: 'Reconciliation data not found. Please run sync script.' });
+  }
+
+  try {
+    const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    res.json({ success: true, data });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Failed to read reconciliation data' });
+  }
+});
+
+app.listen(PORT, () => {
     console.log(`
 ╔═══════════════════════════════════════════════════════════╗
 ║         Trading Dashboard Backend Server                 ║
