@@ -2,8 +2,6 @@ const express = require('express');
 const cors = require('cors');
 const https = require('https');
 const csv = require('csv-parser');
-const fs = require('fs');
-const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -842,8 +840,6 @@ app.get('/api/live-trades', async (req, res) => {
 app.get('/api/gblast-reconciliation', async (req, res) => {
   try {
     let reconData;
-    const fs = require('fs');
-    const path = require('path');
     const localPath = path.join(__dirname, '..', 'trades', 'G - BLAST - LIVE', 'gblast_live_reconciliation.json');
     
     // Try local filesystem first
