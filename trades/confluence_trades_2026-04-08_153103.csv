@@ -1,0 +1,2 @@
+symbol,entry_time,exit_time,entry_price,exit_price,quantity,position_type,net_pnl,profit_pct,exit_reason,holding_minutes,max_profit_seen,exit_level,hard_stop_915,confluence_trade,oi_signal_pattern,hybrid_signal_type,entry_reason
+ONGC,2026-04-08T09:49:49.353377,2026-04-08T10:37:08.227074,279.5,277.9,178,SHORT,284.80000000000405,0.5724508050089527,PROFIT_TRAILING_STOP_5MIN,47,0.8765652951699423,277.95,280.0,True,BEARISH,BEARISH,UNKNOWN
