@@ -580,9 +580,10 @@ const LivePage = () => {
                                             { k: 'symbol', l: 'Instrument' },
                                             { k: 'direction', l: 'Dir' },
                                             { k: 'entry_price', l: 'Entry' },
-                                            { k: 'slippage', l: 'Slip Cost' },
+                                            ...(activeVersion === 'RECONCILIATION' ? [{ k: 'slippage', l: 'Slip Cost' }] : []),
                                             { k: 'exit_price', l: 'Exit' },
                                             { k: 'total_pnl', l: 'Gross P&L' },
+                                            ...(activeVersion === 'RECONCILIATION' ? [{ k: 'net_pnl', l: 'Net P&L' }] : []),
                                             { k: 'ending_capital', l: 'Capital' },
                                             { k: 'return_pct', l: 'Ret%' },
                                             { k: 'exit_reason', l: 'Outcome' }
@@ -630,15 +631,25 @@ const LivePage = () => {
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                     <div className="font-bold text-gray-600">₹{t.entry_price.toFixed(2)}</div>
-                                                    {t.scan_entry_price > 0 && <div className="text-[10px] text-gray-400 font-bold">SCAN: ₹{t.scan_entry_price.toFixed(2)}</div>}
+                                                    {(activeVersion === 'RECONCILIATION' && t.scan_entry_price > 0) && <div className="text-[10px] text-gray-400 font-bold">SCAN: ₹{t.scan_entry_price.toFixed(2)}</div>}
                                                 </td>
-                                                <td className="px-6 py-4 font-bold text-red-500">
-                                                    {t.slippage > 0 ? `-₹${t.slippage.toFixed(2)}` : '—'}
-                                                </td>
+                                                {activeVersion === 'RECONCILIATION' && (
+                                                    <td className="px-6 py-4 font-bold text-red-500">
+                                                        {t.slippage > 0 ? `-₹${t.slippage.toFixed(2)}` : <span className="text-gray-300">₹0.00</span>}
+                                                    </td>
+                                                )}
                                                 <td className="px-6 py-4 font-bold text-gray-600">₹{t.exit_price.toFixed(2)}</td>
                                                 <td className={`px-6 py-4 font-black ${isWin ? 'text-emerald-600' : 'text-red-500'}`}>
                                                     {formatPnL(t.total_pnl)}
                                                 </td>
+                                                {activeVersion === 'RECONCILIATION' && (() => {
+                                                    const np = t.total_pnl - (t.slippage > 0 ? t.slippage : 0);
+                                                    return (
+                                                        <td className={`px-6 py-4 font-black ${np >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                                                            {formatPnL(np)}
+                                                        </td>
+                                                    );
+                                                })()}
                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                     <div className="text-gray-400 text-[10px] font-bold">START: {formatCurRaw(t.starting_capital)}</div>
                                                     <div className="font-black text-blue-600">{formatCurRaw(t.ending_capital)}</div>
