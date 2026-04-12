@@ -1,6 +1,7 @@
 import os
 import re
 import csv
+import sys
 
 def parse_niftybees_log(filename):
     trades = []
@@ -15,29 +16,28 @@ def parse_niftybees_log(filename):
                 if ts_match:
                     current_trade['entry_time'] = ts_match.group(1)
             
-            elif 'Signal        :' in line and current_trade:
-                m = re.search(r'Signal\s+:\s+(\w+)', line)
+            elif 'signal' in line.lower() and current_trade and 'votes' in line.lower():
+                m = re.search(r'Signal\s*:\s*(\w+)', line, re.IGNORECASE)
                 if m:
-                    current_trade['signal_type'] = m.group(1)
+                    current_trade['signal_type'] = m.group(1).upper()
             
-            elif 'NIFTY ref     :' in line and current_trade:
-                m = re.search(r'NIFTY ref\s+:\s+([\d.]+)', line)
+            elif 'nifty ref' in line.lower() and current_trade:
+                m = re.search(r'NIFTY ref\s*:\s*([\d.]+)', line, re.IGNORECASE)
                 if m:
                     current_trade['nifty_ref_spot'] = m.group(1)
             
-            elif 'Direction     :' in line and current_trade:
-                m = re.search(r'Direction\s+:\s+(\w+)\s+NIFTYBEES', line)
+            elif 'direction' in line.lower() and current_trade:
+                m = re.search(r'Direction\s*:\s*(\w+)', line, re.IGNORECASE)
                 if m:
-                    current_trade['direction'] = m.group(1)
+                    current_trade['direction'] = m.group(1).upper()
             
-            elif 'Entry Price   : Rs.' in line and current_trade:
-                m = re.search(r'Entry Price\s+:\s+Rs\.([\d.]+)', line)
+            elif 'entry price' in line.lower() and current_trade:
+                m = re.search(r'Entry [Pp]rice\s*:\s*Rs\.([\d.]+)', line)
                 if m:
                     current_trade['entry_price'] = m.group(1)
             
-            elif 'Quantity      :' in line and current_trade:
-                # Quantity      : 385 units  (Rs.99,992.20)
-                m = re.search(r'Quantity\s+:\s+(\d+)', line)
+            elif 'quantity' in line.lower() and current_trade:
+                m = re.search(r'Quantity\s*:\s*(\d+)', line, re.IGNORECASE)
                 if m:
                     current_trade['qty'] = m.group(1)
                 m2 = re.search(r'Rs\.([\d,.]+)', line)
@@ -75,7 +75,11 @@ def parse_niftybees_log(filename):
     return trades
 
 if __name__ == "__main__":
-    log_file = 'blaze_niftybees_20260401.log'
+    if len(sys.argv) > 1:
+        log_file = sys.argv[1]
+    else:
+        log_file = 'blaze_niftybees_20260401.log'
+        
     if os.path.exists(log_file):
         trades = parse_niftybees_log(log_file)
         if trades:
@@ -84,7 +88,7 @@ if __name__ == "__main__":
                 'instrument', 'entry_price', 'qty', 'capital_used', 
                 'status', 'exit_time', 'exit_price', 'total_pnl', 'pnl_pct', 'exit_reason'
             ]
-            csv_file = 'BLAZE_NiftyBeES_20260401.csv'
+            csv_file = log_file.replace('.log', '.csv')
             with open(csv_file, 'w', newline='', encoding='utf-8') as f:
                 writer = csv.DictWriter(f, fieldnames=fieldnames)
                 writer.writeheader()
