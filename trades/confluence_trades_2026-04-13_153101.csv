@@ -1,0 +1,2 @@
+symbol,entry_time,exit_time,entry_price,exit_price,quantity,position_type,net_pnl,profit_pct,exit_reason,holding_minutes,max_profit_seen,exit_level,hard_stop_915,confluence_trade,oi_signal_pattern,hybrid_signal_type,entry_reason
+COCHINSHIP,2026-04-13T09:29:44.328526,2026-04-13T09:29:44.679914,1434.7,1434.7,34,SHORT,0.0,0.0,HARD_STOP_LOSS_915,0,0,1427.9,1427.9,True,BEARISH,BEARISH,UNKNOWN
