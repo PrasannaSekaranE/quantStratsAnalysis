@@ -234,6 +234,7 @@ const TradingDashboard = () => {
       'GBLAST_LIVE': { name: 'GBLAST LIVE', subtitle: 'Live Versions', positionType: 'OPTIONS' },
       'GBlastV2_Upgrade': { name: 'G-Blast (v2 Upgrade)', subtitle: 'Paper', positionType: 'OPTIONS' },
       'GBlastRatchet': { name: 'G-Blast (Ratchet)', subtitle: 'Paper', positionType: 'OPTIONS' },
+      'GBlastV2_2': { name: 'G-Blast (v2.2)', subtitle: 'Paper', positionType: 'OPTIONS' },
       'B20': { name: 'B-20', subtitle: 'Paper', positionType: 'OPTIONS' }
     };
     return displays[strategy] || { name: strategy, subtitle: '', positionType: '' };
@@ -453,7 +454,7 @@ const TradingDashboard = () => {
       <div className="flex gap-3 mb-8 flex-wrap">
         {[
           'ALL', 'iTrack', 'TrendFlo',
-          'GBlastV2_Upgrade', 'GBlastRatchet',
+          'GBlastV2_Upgrade', 'GBlastRatchet', 'GBlastV2_2',
           'Blaze', 'BlazeV2', 'BlazeV3', 'BlazeV4', 'BlazeV4_2', 'BlazeV5', 'B20'
         ].map((strategy) => {
           const display = strategy !== 'ALL' ? getStrategyDisplay(strategy) : null;

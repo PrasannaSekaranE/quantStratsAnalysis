@@ -34,8 +34,8 @@ const GITHUB_BRANCH = 'main';
 async function getTradeFileList() {
   const tradesDir = path.join(__dirname, '..', 'trades');
   const subDirs = [
-    'LIVE - V1', 'LIVE - V2', 'G - Blast - Paper (Upgrade 2.0)', 'G - BLAST - Ratchet', 
-    'G - BLAST - LIVE',
+    'LIVE - V1', 'LIVE - V2', 'G - Blast - Paper (Upgrade 2.0)', 'G - BLAST - Ratchet',
+    'G - BLAST - LIVE', 'G - Blast (V 2.2)',
     'Blaze v1 - v1', 'Blaze v2 -v2', 'Blaze v3 - v3', 'Blaze v4 - v4',
     'Blaze v4.2 - v4.2', 'Blaze 5 - v5', 'B - 20 - Nifty BEES'
   ];
@@ -247,6 +247,8 @@ function normalizeTrade(row, filename) {
     strategy = 'GBlastV2_Upgrade';
   } else if (filenameLower.includes('g - blast - ratchet')) {
     strategy = 'GBlastRatchet';
+  } else if (filenameLower.includes('g - blast (v 2.2)')) {
+    strategy = 'GBlastV2_2';
   }
 
   // Fallback to manual 'type' column or filename patterns
@@ -270,9 +272,9 @@ function normalizeTrade(row, filename) {
   const b20Signal = (row.signal_type || row.Signal_Type || row.SIGNAL_TYPE || '').toUpperCase();
 
   if (!positionType) {
-    if (niftySignal === 'BULLISH' || sensexSignal === 'BULLISH' || b20Signal === 'BULLISH' || row.direction === 'BUY_CALL') {
+    if (niftySignal === 'BULLISH' || sensexSignal === 'BULLISH' || b20Signal === 'BULLISH' || b20Signal === 'CALL' || row.direction === 'BUY_CALL') {
       positionType = 'LONG';
-    } else if (niftySignal === 'BEARISH' || sensexSignal === 'BEARISH' || b20Signal === 'BEARISH' || row.direction === 'BUY_PUT') {
+    } else if (niftySignal === 'BEARISH' || sensexSignal === 'BEARISH' || b20Signal === 'BEARISH' || b20Signal === 'PUT' || row.direction === 'BUY_PUT') {
       positionType = 'SHORT';
     } else if (row.direction || row.Direction || row.DIRECTION) {
       positionType = (row.direction || row.Direction || row.DIRECTION).toUpperCase();
@@ -300,6 +302,11 @@ function normalizeTrade(row, filename) {
     symbol = strike && optionType ? `${base} ${strike} ${optionType}` : base;
   }
 
+  // Normalize V2.2 symbol format: NIFTY_22600CE → NIFTY 22600 CE
+  if (symbol && symbol.includes('_') && /^[A-Z]+_\d+(CE|PE)$/.test(symbol)) {
+    symbol = symbol.replace('_', ' ').replace(/(CE|PE)$/, ' $1').trim();
+  }
+
   const pnl = parseFloatSafe(row.total_pnl || row.net_pnl || row.pnl || row.Net_PnL || row.PNL || row.Total_PnL);
   const profitPct = parseFloatSafe(row.pnl_pct || row.profit_pct || row.return_pct || row.Profit_Pct || row.PROFIT_PCT);
 
@@ -314,7 +321,7 @@ function normalizeTrade(row, filename) {
     net_pnl: pnl,
     profit_pct: profitPct,
     exit_reason: row.exit_reason || row.Exit_Reason || row.EXIT_REASON || '',
-    quantity: parseFloatSafe(row.quantity || row.quantity_lots || row.Quantity || row.QUANTITY),
+    quantity: parseFloatSafe(row.quantity || row.qty || row.quantity_lots || row.Quantity || row.QUANTITY),
     holding_minutes: parseFloatSafe(row.holding_minutes || row.Holding_Minutes || row.HOLDING_MINUTES),
     strategy: strategy,
     source_file: filename
@@ -620,6 +627,7 @@ app.get('/api/trades', async (req, res) => {
       GBlast: calculateStats(trades.filter(t => t.strategy === 'GBlast')),
       GBlastV2: calculateStats(trades.filter(t => t.strategy === 'GBlastV2')),
       GBlastV2_Upgrade: calculateStats(trades.filter(t => t.strategy === 'GBlastV2_Upgrade')),
+      GBlastV2_2: calculateStats(trades.filter(t => t.strategy === 'GBlastV2_2')),
       GBlastV3: calculateStats(trades.filter(t => t.strategy === 'GBlastV3')),
       Blaze: calculateStats(trades.filter(t => t.strategy === 'Blaze')),
       BlazeV2: calculateStats(trades.filter(t => t.strategy === 'BlazeV2')),
