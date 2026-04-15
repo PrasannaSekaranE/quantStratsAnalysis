@@ -60,18 +60,11 @@ async function getTradeFileList() {
     return results;
   }
 
-  // Try local filesystem first — only scan known strategy subDirs, skip root-level CSVs
+  // Try local filesystem first
   if (fs.existsSync(tradesDir)) {
     try {
-      let tradeFiles = [];
-      for (const subDir of subDirs) {
-        const subDirPath = path.join(tradesDir, subDir);
-        if (fs.existsSync(subDirPath)) {
-          const files = scanDirLocally(subDirPath, subDir);
-          tradeFiles = tradeFiles.concat(files);
-        }
-      }
-      console.log(`✓ Detected ${tradeFiles.length} trade files locally (known subdirs only)`);
+      const tradeFiles = scanDirLocally(tradesDir);
+      console.log(`✓ Detected ${tradeFiles.length} trade files locally (including subdirs)`);
       return tradeFiles;
     } catch (error) {
       console.error('✗ Error reading local trades directory:', error);
@@ -101,10 +94,7 @@ async function getTradeFileList() {
       let files = [];
       for (const item of response) {
         if (item.type === 'file' && (item.name.endsWith('.csv') || item.name.endsWith('.log'))) {
-          // Skip root-level files — only collect files inside strategy subfolders
-          if (folderPath !== 'trades') {
-            files.push(`${folderPath.replace('trades/', '')}/${item.name}`);
-          }
+          files.push(folderPath === 'trades' ? item.name : `${folderPath.replace('trades/', '')}/${item.name}`);
         } else if (item.type === 'dir') {
           if (folderPath === 'trades') {
             // At root: only recurse into known strategy subDirs
@@ -123,7 +113,7 @@ async function getTradeFileList() {
     }
 
     const tradeFiles = await fetchGitHubDir('trades');
-    console.log(`✓ Detected ${tradeFiles.length} trade files from GitHub API (known subdirs only)`);
+    console.log(`✓ Detected ${tradeFiles.length} trade files from GitHub API`);
     return tradeFiles;
   } catch (error) {
     console.error('✗ Error fetching file list from GitHub:', error.message);
