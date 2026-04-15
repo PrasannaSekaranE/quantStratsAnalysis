@@ -89,11 +89,14 @@ const LivePage = () => {
     const [selectedDate, setSelectedDate] = useState('ALL');
     const [sortConfig, setSortConfig] = useState({ key: 'entry_time', direction: 'desc' });
 
-    const fetchData = async () => {
+    const fetchData = async (forceRefresh = false) => {
         setLoading(true);
         setError(null);
         try {
-            const res = await fetch(`${API_BASE_URL}/live-trades`);
+            const url = forceRefresh
+                ? `${API_BASE_URL}/live-trades?refresh=1`
+                : `${API_BASE_URL}/live-trades`;
+            const res = await fetch(url);
             const json = await res.json();
             if (json.success) setData(json);
             else setError(json.error || 'Failed to load live trades');
@@ -255,7 +258,7 @@ const LivePage = () => {
                 </div>
 
                 <button
-                    onClick={fetchData}
+                    onClick={() => fetchData(true)}
                     disabled={loading}
                     className="px-6 py-3 rounded-xl font-bold text-white transition-all transform hover:scale-105 flex items-center gap-2 shadow-lg"
                     style={{ background: 'linear-gradient(135deg, rgb(31, 168, 166) 0%, rgb(23, 98, 199) 100%)' }}

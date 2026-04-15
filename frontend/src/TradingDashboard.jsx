@@ -21,12 +21,14 @@ const TradingDashboard = () => {
   const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
   // Fetch trades from backend
-  const fetchTrades = async () => {
+  // forceRefresh=true busts the server cache (used by manual Refresh button)
+  const fetchTrades = async (forceRefresh = false) => {
     setLoading(true);
     setError(null);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/trades`);
+      const url = forceRefresh ? `${API_BASE_URL}/trades?refresh=1` : `${API_BASE_URL}/trades`;
+      const response = await fetch(url);
       const data = await response.json();
 
       if (data.success) {
@@ -444,7 +446,7 @@ const TradingDashboard = () => {
         </div>
 
         <button
-          onClick={fetchTrades}
+          onClick={() => fetchTrades(true)}
           disabled={loading}
           className="px-6 py-3 rounded-xl font-bold text-white transition-all transform hover:scale-105 flex items-center gap-2"
           style={{ background: 'linear-gradient(135deg, rgb(31, 168, 166) 0%, rgb(23, 98, 199) 100%)' }}
