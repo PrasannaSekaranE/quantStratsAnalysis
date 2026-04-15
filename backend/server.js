@@ -730,25 +730,17 @@ async function loadLiveVersion(githubSubPath, filePattern, normaliser, startingC
 function normaliseV1(row) {
   const signal = (row.signal_type || '').toUpperCase();
   const pnl = parseFloat(row.total_pnl) || 0;
-  
-  const scan_entry = parseFloat(row.scan_entry_price) || 0;
-  const entry_price = parseFloat(row.entry_price) || 0;
-  const quantity = parseInt(row.quantity) || 0;
-  const slippage = (scan_entry && entry_price) ? ((entry_price - scan_entry) * quantity) : 0;
-
   return {
     entry_time: row.entry_time || '',
     exit_time: row.exit_time || '',
     symbol: row.kite_symbol || '',
     direction: signal === 'BEARISH' ? 'PUT' : 'CALL',
     option_type: row.option_type || '',
-    entry_price: entry_price,
-    scan_entry_price: scan_entry,
+    entry_price: parseFloat(row.entry_price) || 0,
     exit_price: parseFloat(row.exit_price) || 0,
     lots: parseInt(row.lots) || 0,
-    quantity: quantity,
+    quantity: parseInt(row.quantity) || 0,
     total_pnl: pnl,
-    slippage: Math.round(slippage * 100) / 100,
     pnl_pct: parseFloat(row.pnl_pct) || 0,
     exit_reason: row.exit_reason || '',
     status: row.status || '',
@@ -760,25 +752,17 @@ function normaliseV1(row) {
 function normaliseV2(row) {
   const signal = (row.signal_type || '').toUpperCase();
   const pnl = parseFloat(row.total_pnl) || 0;
-  
-  const scan_entry = parseFloat(row.scan_entry_price) || 0;
-  const entry_price = parseFloat(row.entry_price) || 0;
-  const quantity = parseInt(row.quantity) || 0;
-  const slippage = (scan_entry && entry_price) ? ((entry_price - scan_entry) * quantity) : 0;
-
   return {
     entry_time: row.entry_time || '',
     exit_time: row.exit_time || '',
     symbol: row.tradingsymbol || '',
     direction: signal === 'BEARISH' ? 'PUT' : 'CALL',
     option_type: row.option_type || row.option_type || '',
-    entry_price: entry_price,
-    scan_entry_price: scan_entry,
+    entry_price: parseFloat(row.entry_price) || 0,
     exit_price: parseFloat(row.exit_price) || 0,
     lots: parseInt(row.lots) || 0,
-    quantity: quantity,
+    quantity: parseInt(row.quantity) || 0,
     total_pnl: pnl,
-    slippage: Math.round(slippage * 100) / 100,
     pnl_pct: parseFloat(row.pnl_pct) || 0,
     exit_reason: row.exit_reason || '',
     status: row.status || '',
@@ -849,50 +833,12 @@ app.get('/api/live-trades', async (req, res) => {
   }
 });
 
-/**
- * GET /api/gblast-reconciliation
- * Returns consolidated reconciliation data for G-Blast Live
- */
-app.get('/api/gblast-reconciliation', async (req, res) => {
-  try {
-    let reconData;
-    const localPath = path.join(__dirname, '..', 'trades', 'G - BLAST - LIVE', 'gblast_live_reconciliation.json');
-    
-    // Try local filesystem first
-    if (fs.existsSync(localPath)) {
-      reconData = JSON.parse(fs.readFileSync(localPath, 'utf8'));
-    } else {
-      // Fallback to GitHub for Vercel production
-      const url = `https://raw.githubusercontent.com/${GITHUB_USERNAME}/${GITHUB_REPO}/${GITHUB_BRANCH}/trades/G%20-%20BLAST%20-%20LIVE/gblast_live_reconciliation.json`;
-      const https = require('https');
-      const response = await new Promise((resolve, reject) => {
-        https.get(url, (resp) => {
-          let body = '';
-          resp.on('data', chunk => body += chunk);
-          resp.on('end', () => {
-             if(resp.statusCode === 200) resolve(body);
-             else reject(new Error(`Failed to fetch from Github with status: ${resp.statusCode}`));
-          });
-        }).on('error', reject);
-      });
-      reconData = JSON.parse(response);
-    }
-    
-    res.json({ success: true, data: reconData });
-  } catch (error) {
-    console.error('Error fetching reconciliation data:', error);
-    res.status(500).json({ success: false, error: 'Failed to read reconciliation data' });
-  }
-});
-
 // For Vercel serverless function
 module.exports = app;
 
 // For local development
 if (process.env.NODE_ENV !== 'production') {
-
-
-app.listen(PORT, () => {
+  app.listen(PORT, () => {
     console.log(`
 ╔═══════════════════════════════════════════════════════════╗
 ║         Trading Dashboard Backend Server                 ║
