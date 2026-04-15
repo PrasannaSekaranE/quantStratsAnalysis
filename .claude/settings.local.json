@@ -4,7 +4,8 @@
       "Bash(python:*)",
       "Bash(grep:*)",
       "Bash(ls:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(vercel --prod)"
     ]
   }
 }

@@ -3,7 +3,11 @@ import { TrendingUp, TrendingDown, Clock, Target, AlertCircle, CheckCircle, XCir
 
 const TradingDashboard = () => {
   const [activeStrategy, setActiveStrategy] = useState('ALL');
+  const [expandedGroup, setExpandedGroup] = useState(null); // null | 'GBLAST' | 'BLAZE'
   const [activeTab, setActiveTab] = useState('table');
+
+  const GBLAST_STRATEGIES = ['GBlastV2_Upgrade', 'GBlastRatchet', 'GBlastV2_2'];
+  const BLAZE_STRATEGIES = ['Blaze', 'BlazeV2', 'BlazeV3', 'BlazeV4', 'BlazeV4_2', 'BlazeV5'];
   const [sortConfig, setSortConfig] = useState({ key: 'date', direction: 'desc' });
   const [tradesData, setTradesData] = useState([]);
   const [stats, setStats] = useState(null);
@@ -450,41 +454,98 @@ const TradingDashboard = () => {
         </button>
       </div>
 
-      {/* Strategy Tabs - Updated Format */}
-      <div className="flex gap-3 mb-8 flex-wrap">
+      {/* Strategy Tabs — Row 1: Top-level groups */}
+      <div className="flex gap-3 mb-3 flex-wrap">
         {[
-          'ALL', 'iTrack', 'TrendFlo',
-          'GBlastV2_Upgrade', 'GBlastRatchet', 'GBlastV2_2',
-          'Blaze', 'BlazeV2', 'BlazeV3', 'BlazeV4', 'BlazeV4_2', 'BlazeV5', 'B20'
-        ].map((strategy) => {
-          const display = strategy !== 'ALL' ? getStrategyDisplay(strategy) : null;
+          { id: 'ALL',     label: 'All Strategies', group: false },
+          { id: 'iTrack',  label: 'iTrack',         group: false },
+          { id: 'TrendFlo',label: 'TrendFlo',        group: false },
+          { id: 'GBLAST',  label: 'G-Blast',         group: true  },
+          { id: 'BLAZE',   label: 'Blaze',            group: true  },
+          { id: 'B20',     label: 'B-20',             group: false },
+        ].map(({ id, label, group }) => {
+          const isGroupActive = group && (
+            (id === 'GBLAST' && GBLAST_STRATEGIES.includes(activeStrategy)) ||
+            (id === 'BLAZE'  && BLAZE_STRATEGIES.includes(activeStrategy))
+          );
+          const isExpanded = expandedGroup === id;
+          const isActive = (!group && activeStrategy === id) || isGroupActive || isExpanded;
+
           return (
             <button
-              key={strategy}
-              onClick={() => setActiveStrategy(strategy)}
+              key={id}
+              onClick={() => {
+                if (!group) {
+                  setActiveStrategy(id);
+                  setExpandedGroup(null);
+                } else {
+                  // Toggle group expansion; collapse resets strategy if it was in this group
+                  if (isExpanded) {
+                    if (id === 'GBLAST' && GBLAST_STRATEGIES.includes(activeStrategy)) setActiveStrategy('ALL');
+                    if (id === 'BLAZE'  && BLAZE_STRATEGIES.includes(activeStrategy))  setActiveStrategy('ALL');
+                    setExpandedGroup(null);
+                  } else {
+                    setExpandedGroup(id);
+                  }
+                }
+              }}
               className="px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 transform hover:scale-105 hover:shadow-2xl"
               style={{
-                background: activeStrategy === strategy
+                background: isActive
                   ? 'linear-gradient(135deg, rgb(31, 168, 166) 0%, rgb(23, 98, 199) 100%)'
                   : 'white',
-                color: activeStrategy === strategy ? 'white' : '#1762C7',
-                boxShadow: activeStrategy === strategy
+                color: isActive ? 'white' : '#1762C7',
+                boxShadow: isActive
                   ? '0 8px 25px rgba(31, 168, 166, 0.4)'
                   : '0 4px 12px rgba(0,0,0,0.1)'
               }}
             >
-              {strategy === 'ALL' ? (
-                'All Strategies'
-              ) : (
-                <div className="flex items-center gap-2">
-                  <span>{display.name}</span>
-                  <span className="text-sm font-normal opacity-90">({display.subtitle})</span>
-                </div>
-              )}
+              <div className="flex items-center gap-1">
+                <span>{label}</span>
+                {group && <span className="text-sm opacity-80">{isExpanded ? '▲' : '▼'}</span>}
+              </div>
             </button>
           );
         })}
       </div>
+
+      {/* Strategy Tabs — Row 2: Sub-tabs (shown when group is expanded) */}
+      {expandedGroup && (
+        <div className="flex gap-2 mb-6 flex-wrap pl-4 py-3 rounded-xl"
+          style={{ background: 'rgba(23, 98, 199, 0.05)', border: '1.5px solid rgba(23, 98, 199, 0.15)' }}>
+          {(expandedGroup === 'GBLAST' ? [
+            { id: 'GBlastV2_Upgrade', label: 'v2 Upgrade' },
+            { id: 'GBlastRatchet',    label: 'Ratchet'    },
+            { id: 'GBlastV2_2',       label: 'v2.2'       },
+          ] : [
+            { id: 'Blaze',    label: 'V1'  },
+            { id: 'BlazeV2',  label: 'V2'  },
+            { id: 'BlazeV3',  label: 'V3'  },
+            { id: 'BlazeV4',  label: 'V4'  },
+            { id: 'BlazeV4_2',label: 'V4.2'},
+            { id: 'BlazeV5',  label: 'V5'  },
+          ]).map(({ id, label }) => (
+            <button
+              key={id}
+              onClick={() => setActiveStrategy(id)}
+              className="px-5 py-2 rounded-lg font-bold text-sm transition-all duration-200 transform hover:scale-105"
+              style={{
+                background: activeStrategy === id
+                  ? 'linear-gradient(135deg, rgb(31, 168, 166) 0%, rgb(23, 98, 199) 100%)'
+                  : 'white',
+                color: activeStrategy === id ? 'white' : '#1762C7',
+                boxShadow: activeStrategy === id
+                  ? '0 4px 15px rgba(31, 168, 166, 0.4)'
+                  : '0 2px 8px rgba(0,0,0,0.08)'
+              }}
+            >
+              {expandedGroup === 'GBLAST' ? `G-Blast ${label}` : `Blaze ${label}`}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {!expandedGroup && <div className="mb-5" />}
 
 
       {/* Statistics Cards */}
