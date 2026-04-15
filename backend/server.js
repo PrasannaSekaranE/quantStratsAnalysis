@@ -60,11 +60,18 @@ async function getTradeFileList() {
     return results;
   }
 
-  // Try local filesystem first
+  // Try local filesystem first — only scan known strategy subDirs, skip root-level CSVs
   if (fs.existsSync(tradesDir)) {
     try {
-      const tradeFiles = scanDirLocally(tradesDir);
-      console.log(`✓ Detected ${tradeFiles.length} trade files locally (including subdirs)`);
+      let tradeFiles = [];
+      for (const subDir of subDirs) {
+        const subDirPath = path.join(tradesDir, subDir);
+        if (fs.existsSync(subDirPath)) {
+          const files = scanDirLocally(subDirPath, subDir);
+          tradeFiles = tradeFiles.concat(files);
+        }
+      }
+      console.log(`✓ Detected ${tradeFiles.length} trade files locally (known subdirs only)`);
       return tradeFiles;
     } catch (error) {
       console.error('✗ Error reading local trades directory:', error);
@@ -94,17 +101,29 @@ async function getTradeFileList() {
       let files = [];
       for (const item of response) {
         if (item.type === 'file' && (item.name.endsWith('.csv') || item.name.endsWith('.log'))) {
-          files.push(folderPath === 'trades' ? item.name : `${folderPath.replace('trades/', '')}/${item.name}`);
-        } else if (item.type === 'dir' && subDirs.includes(item.name)) {
-          const subFiles = await fetchGitHubDir(`${folderPath}/${item.name}`);
-          files = files.concat(subFiles);
+          // Skip root-level files — only collect files inside strategy subfolders
+          if (folderPath !== 'trades') {
+            files.push(`${folderPath.replace('trades/', '')}/${item.name}`);
+          }
+        } else if (item.type === 'dir') {
+          if (folderPath === 'trades') {
+            // At root: only recurse into known strategy subDirs
+            if (subDirs.includes(item.name)) {
+              const subFiles = await fetchGitHubDir(`${folderPath}/${item.name}`);
+              files = files.concat(subFiles);
+            }
+          } else {
+            // Inside a strategy folder: always recurse (handles V1/V2 sub-folders)
+            const subFiles = await fetchGitHubDir(`${folderPath}/${item.name}`);
+            files = files.concat(subFiles);
+          }
         }
       }
       return files;
     }
 
     const tradeFiles = await fetchGitHubDir('trades');
-    console.log(`✓ Detected ${tradeFiles.length} trade files from GitHub API (including subdirs)`);
+    console.log(`✓ Detected ${tradeFiles.length} trade files from GitHub API (known subdirs only)`);
     return tradeFiles;
   } catch (error) {
     console.error('✗ Error fetching file list from GitHub:', error.message);
