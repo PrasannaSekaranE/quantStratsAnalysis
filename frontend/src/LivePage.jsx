@@ -113,7 +113,7 @@ const LivePage = () => {
         if (activeVersion === 'V1') trades = data.v1.trades;
         else if (activeVersion === 'V1_1') trades = data.v1_1.trades;
         else if (activeVersion === 'V2_UPGRADE') trades = data.v2_upgrade.trades;
-        else trades = [...data.v1.trades, ...data.v1_1.trades, ...data.v2_upgrade.trades];
+        else trades = [...data.v1.trades, ...data.v1_1.trades, ...data.v2_upgrade.trades]; // ALL
 
         // All G-Blast Live trades are NSE F&O Options
         return trades.map(trade => {
@@ -172,12 +172,16 @@ const LivePage = () => {
 
     // Calculate stats for current selection
     const currentStats = useMemo(() => {
-        // Stats should be calculated on the DATE-FILTERED data, but maybe ignore sort for stats?
-        // Actually stats depend on the set of trades, so processedTrades is fine (sort doesn't affect sum/avg)
+        const versionKey = activeVersion === 'V1' ? 'v1' : activeVersion === 'V1_1' ? 'v1_1' : 'v2_upgrade';
+        const initialCapital = activeVersion === 'ALL'
+            ? 150000
+            : (data?.[versionKey]?.startingCapital || 50000);
+
         if (processedTrades.length === 0) {
             return {
                 totalTrades: 0, totalPnL: 0, winners: 0, losers: 0, winRate: 0,
-                avgProfit: 0, avgLoss: 0, avgPnL: 0, capital: activeVersion === 'ALL' ? 100000 : 50000
+                avgProfit: 0, avgLoss: 0, avgPnL: 0,
+                capital: initialCapital, initialCapital
             };
         }
 
@@ -189,27 +193,9 @@ const LivePage = () => {
         const avgProfit = winners.length > 0 ? winners.reduce((s, t) => s + t.net_pnl, 0) / winners.length : 0;
         const avgLoss = losers.length > 0 ? losers.reduce((s, t) => s + t.net_pnl, 0) / losers.length : 0;
 
-        let capital = 0;
-        if (activeVersion === 'ALL') {
-            const v1End = data.v1.trades[data.v1.trades.length - 1]?.ending_capital || data.v1.startingCapital;
-            const v11End = data.v1_1.trades[data.v1_1.trades.length - 1]?.ending_capital || data.v1_1.startingCapital;
-            const v2UpEnd = data.v2_upgrade.trades[data.v2_upgrade.trades.length - 1]?.ending_capital || data.v2_upgrade.startingCapital;
-            capital = v1End + v11End + v2UpEnd;
-        } else {
-            const versionKey = activeVersion === 'V1' ? 'v1' : activeVersion === 'V1_1' ? 'v1_1' : 'v2_upgrade';
-            const versionTrades = data[versionKey].trades;
-            capital = versionTrades[versionTrades.length - 1]?.ending_capital || data[versionKey].startingCapital;
-        }
-
-        let initialCapital = 0;
-        if (activeVersion === 'ALL') {
-            initialCapital = (data.summary?.startingCapital || 50000) + (data.summary?.v11Capital || 50000) + (data.summary?.v2UpgradeCapital || 50000); 
-            // Better to rely on the backend summary if available, falling back to 1.5L
-            if (initialCapital < 150000) initialCapital = 150000; 
-        } else {
-            const versionKey = activeVersion === 'V1' ? 'v1' : activeVersion === 'V1_1' ? 'v1_1' : 'v2_upgrade';
-            initialCapital = data[versionKey].startingCapital || 50000;
-        }
+        // Capital = starting capital + cumulative net P&L across ALL enriched trades (ignores date filter)
+        const totalNetPnLAll = activeTrades.reduce((s, t) => s + (t.net_pnl || 0), 0);
+        const capital = Math.round((initialCapital + totalNetPnLAll) * 100) / 100;
 
         return {
             totalTrades: processedTrades.length,
@@ -223,7 +209,7 @@ const LivePage = () => {
             capital,
             initialCapital
         };
-    }, [processedTrades, activeVersion, data]);
+    }, [processedTrades, activeTrades, activeVersion, data]);
 
     if (loading && !data) return <BarLoader />;
 
