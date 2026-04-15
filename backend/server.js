@@ -467,10 +467,69 @@ async function parseBlazeLog(filename) {
   }
 }
 
+// ─── In-memory cache ─────────────────────────────────────────────────────────
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+let _tradesCache = null;
+let _tradesCacheAt = 0;
+let _tradesRefreshing = false;
+
+let _liveCache = null;
+let _liveCacheAt = 0;
+let _liveRefreshing = false;
+
+async function refreshTradesCache() {
+  if (_tradesRefreshing) return;
+  _tradesRefreshing = true;
+  try {
+    const fresh = await _loadTradesFromGitHub();
+    _tradesCache = fresh;
+    _tradesCacheAt = Date.now();
+    console.log(`✓ Trades cache refreshed (${fresh.length} trades)`);
+  } catch (e) {
+    console.error('✗ Background trades cache refresh failed:', e.message);
+  } finally {
+    _tradesRefreshing = false;
+  }
+}
+
+async function refreshLiveCache() {
+  if (_liveRefreshing) return;
+  _liveRefreshing = true;
+  try {
+    const fresh = await _loadLiveData();
+    _liveCache = fresh;
+    _liveCacheAt = Date.now();
+    console.log('✓ Live cache refreshed');
+  } catch (e) {
+    console.error('✗ Background live cache refresh failed:', e.message);
+  } finally {
+    _liveRefreshing = false;
+  }
+}
+
+async function loadTradesFromGitHub(forceRefresh = false) {
+  const age = Date.now() - _tradesCacheAt;
+  if (_tradesCache && !forceRefresh) {
+    if (age < CACHE_TTL_MS) {
+      console.log(`✓ Trades cache hit (age ${Math.round(age / 1000)}s)`);
+      return _tradesCache;
+    }
+    // Stale — return immediately and refresh in background
+    console.log(`⚡ Trades cache stale (age ${Math.round(age / 1000)}s) — serving stale, refreshing in background`);
+    refreshTradesCache();
+    return _tradesCache;
+  }
+  // No cache at all — must wait for first load
+  console.log('⏳ Trades cache cold — loading now...');
+  await refreshTradesCache();
+  return _tradesCache;
+}
+
 /**
- * Load trades from GitHub
+ * Load trades from GitHub (internal, uncached)
  */
-async function loadTradesFromGitHub() {
+async function _loadTradesFromGitHub() {
   try {
     const csvFiles = await getTradeFileList();
     console.log(`Fetching ${csvFiles.length} files...`);
@@ -618,7 +677,8 @@ app.get('/api/health', (req, res) => {
 // Get all trades
 app.get('/api/trades', async (req, res) => {
   try {
-    const trades = await loadTradesFromGitHub();
+    const forceRefresh = req.query.refresh === '1';
+    const trades = await loadTradesFromGitHub(forceRefresh);
 
     const stats = {
       ALL: calculateStats(trades),
@@ -800,45 +860,55 @@ function calcLiveStats(trades, startingCapital) {
   };
 }
 
+async function _loadLiveData() {
+  const [v1Trades, v2Trades, upgradeTrades] = await Promise.all([
+    loadLiveVersion('G - BLAST - LIVE/V1', /^hybrid_trades_live_/, normaliseV1, STARTING_CAPITAL_V1),
+    loadLiveVersion('G - BLAST - LIVE/V2', /^kite_live_trades_/, normaliseV2, STARTING_CAPITAL_V1),
+    loadLiveVersion('G - BLAST - LIVE/V2 Upgrade', /^hybrid_trades_live_/, normaliseV1, V2_UPGRADE_CAPITAL),
+  ]);
+  return {
+    success: true,
+    v1: { trades: v1Trades, stats: calcLiveStats(v1Trades, STARTING_CAPITAL_V1), label: "V1 (40% SL)", startingCapital: STARTING_CAPITAL_V1 },
+    v1_1: { trades: v2Trades, stats: calcLiveStats(v2Trades, STARTING_CAPITAL_V1), label: "V1.1 (25% SL)", startingCapital: STARTING_CAPITAL_V1, isDiscontinued: true },
+    v2_upgrade: { trades: upgradeTrades, stats: calcLiveStats(upgradeTrades, V2_UPGRADE_CAPITAL), label: "V2 Upgrade", startingCapital: V2_UPGRADE_CAPITAL },
+    summary: { startingCapital: INITIAL_CAPITAL, v2UpgradeCapital: V2_UPGRADE_CAPITAL },
+  };
+}
+
+async function loadLiveData(forceRefresh = false) {
+  const age = Date.now() - _liveCacheAt;
+  if (_liveCache && !forceRefresh) {
+    if (age < CACHE_TTL_MS) {
+      console.log(`✓ Live cache hit (age ${Math.round(age / 1000)}s)`);
+      return _liveCache;
+    }
+    console.log(`⚡ Live cache stale — serving stale, refreshing in background`);
+    refreshLiveCache();
+    return _liveCache;
+  }
+  console.log('⏳ Live cache cold — loading now...');
+  await refreshLiveCache();
+  return _liveCache;
+}
+
 app.get('/api/live-trades', async (req, res) => {
   try {
-    const [v1Trades, v2Trades, upgradeTrades] = await Promise.all([
-      loadLiveVersion('G - BLAST - LIVE/V1', /^hybrid_trades_live_/, normaliseV1, STARTING_CAPITAL_V1),
-      loadLiveVersion('G - BLAST - LIVE/V2', /^kite_live_trades_/, normaliseV2, STARTING_CAPITAL_V1),
-      loadLiveVersion('G - BLAST - LIVE/V2 Upgrade', /^hybrid_trades_live_/, normaliseV1, V2_UPGRADE_CAPITAL),
-    ]);
-
-    res.json({
-      success: true,
-      v1: {
-        trades: v1Trades,
-        stats: calcLiveStats(v1Trades, STARTING_CAPITAL_V1),
-        label: "V1 (40% SL)",
-        startingCapital: STARTING_CAPITAL_V1
-      },
-      v1_1: {
-        trades: v2Trades,
-        stats: calcLiveStats(v2Trades, STARTING_CAPITAL_V1),
-        label: "V1.1 (25% SL)",
-        startingCapital: STARTING_CAPITAL_V1,
-        isDiscontinued: true
-      },
-      v2_upgrade: {
-        trades: upgradeTrades,
-        stats: calcLiveStats(upgradeTrades, V2_UPGRADE_CAPITAL),
-        label: "V2 Upgrade",
-        startingCapital: V2_UPGRADE_CAPITAL
-      },
-      summary: {
-        startingCapital: INITIAL_CAPITAL,
-        v2UpgradeCapital: V2_UPGRADE_CAPITAL
-      },
-      timestamp: new Date().toISOString(),
-    });
+    const forceRefresh = req.query.refresh === '1';
+    const data = await loadLiveData(forceRefresh);
+    res.json({ ...data, timestamp: new Date().toISOString() });
   } catch (error) {
     console.error('Error fetching live trades:', error);
     res.status(500).json({ success: false, error: error.message });
   }
+});
+
+// Force-bust both caches (call after committing new trade files)
+app.get('/api/refresh', async (req, res) => {
+  console.log('🔄 Manual cache refresh requested');
+  _tradesCache = null; _tradesCacheAt = 0;
+  _liveCache = null;   _liveCacheAt = 0;
+  await Promise.all([refreshTradesCache(), refreshLiveCache()]);
+  res.json({ success: true, message: 'Caches refreshed', timestamp: new Date().toISOString() });
 });
 
 // For Vercel serverless function
@@ -847,6 +917,9 @@ module.exports = app;
 // For local development
 if (process.env.NODE_ENV !== 'production') {
   app.listen(PORT, () => {
+    // Pre-warm caches so first request is instant
+    refreshTradesCache().catch(() => {});
+    refreshLiveCache().catch(() => {});
     console.log(`
 ╔═══════════════════════════════════════════════════════════╗
 ║         Trading Dashboard Backend Server                 ║
