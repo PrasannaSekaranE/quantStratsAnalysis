@@ -269,9 +269,7 @@ function normalizeTrade(row, filename) {
     else if (typeCol === 'v4.2' || typeCol === 'v42' || baseName.includes('_v4.2') || baseName.includes('_v5.csv')) strategy = 'BlazeV4_2';
     else if (typeCol === 'v5' || typeCol === 'v6' || baseName.includes('_v5') || baseName.includes('_v6')) strategy = 'BlazeV5';
     else if (baseName.includes('niftybees') || baseName.includes('b-20') || baseName.includes('b20')) strategy = 'B20';
-    else if (baseName.startsWith('v1_')) strategy = 'Blaze';
-    else if (baseName.startsWith('v2_')) strategy = 'BlazeV2';
-    else if (baseName.startsWith('v3_')) strategy = 'BlazeV3';
+    // Note: baseName.startsWith('v1_/v2_/v3_') removed — those are root G-Blast files, not Blaze
   }
 
   // 2. Extract Position Type
@@ -290,10 +288,14 @@ function normalizeTrade(row, filename) {
     }
   }
 
-  // Final catch-all for TrendFlo/iTrack
+  // Final catch-all for TrendFlo/iTrack — only for pure equity trades (no options fields)
   if (strategy === 'Unknown') {
-    if (positionType === 'SHORT') strategy = 'iTrack';
-    else if (positionType === 'LONG') strategy = 'TrendFlo';
+    const isOptionsFile = !!(row.entry_strike || row.option_type || row.direction || row.instrument_key);
+    if (!isOptionsFile) {
+      if (positionType === 'SHORT') strategy = 'iTrack';
+      else if (positionType === 'LONG') strategy = 'TrendFlo';
+    }
+    // Root-level F&O files (live_trades_*, V1_*, V3_*) stay 'Unknown' — excluded from all strategy tabs
   }
 
   const parseFloatSafe = (val) => {
