@@ -781,6 +781,11 @@ const TradingDashboard = () => {
                               <Calendar size={16} className="text-gray-400" />
                               <span className="font-semibold text-gray-700">{formatDate(trade.date)}</span>
                             </div>
+                            {(trade.strategy === 'V1_LIVE_HYBRID' || trade.strategy === 'V1_LIVE_KITE') && trade.date >= '2026-04-20' && (
+                              <div className="mt-1 inline-flex items-center w-fit px-1.5 py-0.5 rounded text-[9px] font-black bg-orange-100 text-orange-600 border border-orange-200 uppercase tracking-tighter">
+                                PAPER
+                              </div>
+                            )}
                             {getEventLabel(trade.date) && (() => {
                               const event = getEventLabel(trade.date);
                               return (

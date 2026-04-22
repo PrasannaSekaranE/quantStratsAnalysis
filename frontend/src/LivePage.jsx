@@ -472,7 +472,14 @@ const LivePage = () => {
                                         <td className="px-6 py-4 font-bold text-gray-400">{t.trade_no || i + 1}</td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="font-bold text-gray-700">{formatDate(t.date)}</div>
-                                            <div className="text-[10px] text-gray-400 uppercase font-bold">{formatTime(t.entry_time)}</div>
+                                            <div className="flex flex-col gap-1">
+                                                <div className="text-[10px] text-gray-400 uppercase font-bold">{formatTime(t.entry_time)}</div>
+                                                {(t.strategy === 'V1_LIVE_HYBRID' || t.strategy === 'V1_LIVE_KITE') && t.date >= '2026-04-20' && (
+                                                    <div className="inline-flex items-center w-fit px-1.5 py-0.5 rounded text-[9px] font-black bg-orange-100 text-orange-600 border border-orange-200 uppercase tracking-tighter">
+                                                        PAPER
+                                                    </div>
+                                                )}
+                                            </div>
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="font-black text-gray-800">{t.symbol}</div>
