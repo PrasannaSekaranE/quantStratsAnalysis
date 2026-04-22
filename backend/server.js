@@ -787,7 +787,8 @@ async function loadLiveVersion(githubSubPath, filePattern, normaliser, startingC
   for (const relPath of files) {
     try {
       const result = await fetchCSVFromGitHub(relPath);
-      allRows = allRows.concat(result.trades.map(r => normaliser(r)));
+      // Pass the relative path to the normalizer so it can detect strategy/version
+      allRows = allRows.concat(result.trades.map(r => normaliser(r, relPath)));
     } catch (e) {
       console.error(`[live-trades] Failed to load ${relPath}:`, e.message);
     }
@@ -806,9 +807,12 @@ async function loadLiveVersion(githubSubPath, filePattern, normaliser, startingC
   });
 }
 
-function normaliseV1(row) {
+function normaliseV1(row, relPath = '') {
   const signal = (row.signal_type || '').toUpperCase();
   const pnl = parseFloat(row.total_pnl) || 0;
+  const isHybrid = relPath.toLowerCase().includes('hybrid') || (row.source || '').toLowerCase().includes('hybrid');
+  const isUpgrade = relPath.toLowerCase().includes('upgrade');
+  
   return {
     entry_time: row.entry_time || '',
     exit_time: row.exit_time || '',
@@ -824,13 +828,16 @@ function normaliseV1(row) {
     exit_reason: row.exit_reason || '',
     status: row.status || '',
     date: (row.entry_time || '').split(' ')[0],
-    version: 'V1',
+    version: isUpgrade ? 'V2_UPGRADE' : 'V1',
+    strategy: isUpgrade ? 'V2_LIVE_UPGRADE' : (isHybrid ? 'V1_LIVE_HYBRID' : 'V1_LIVE_KITE')
   };
 }
 
-function normaliseV2(row) {
+function normaliseV2(row, relPath = '') {
   const signal = (row.signal_type || '').toUpperCase();
   const pnl = parseFloat(row.total_pnl) || 0;
+  const isHybrid = relPath.toLowerCase().includes('hybrid');
+
   return {
     entry_time: row.entry_time || '',
     exit_time: row.exit_time || '',
@@ -846,7 +853,8 @@ function normaliseV2(row) {
     exit_reason: row.exit_reason || '',
     status: row.status || '',
     date: (row.entry_time || '').split(' ')[0],
-    version: 'V2',
+    version: 'V1.1',
+    strategy: isHybrid ? 'V2_LIVE_HYBRID' : 'V2_LIVE_KITE'
   };
 }
 
