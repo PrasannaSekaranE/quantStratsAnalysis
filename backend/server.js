@@ -564,6 +564,19 @@ async function _loadTradesFromGitHub() {
           validTrades = normalizedTrades.filter(trade =>
             trade.symbol && trade.position_type && trade.date
           );
+
+          // Filter G-Blast (V 2.2) strikes to only show multiples of 100 (hide 50s)
+          if (filename.toLowerCase().includes('g - blast (v 2.2)')) {
+            validTrades = validTrades.filter(trade => {
+              // Extract the numeric strike from symbols like "NIFTY_23950PE"
+              const strikeMatch = trade.symbol.match(/\d+/); 
+              if (strikeMatch) {
+                const strike = parseInt(strikeMatch[0]);
+                return strike % 100 === 0;
+              }
+              return true;
+            });
+          }
         }
 
         // Apply 2:00 PM filter to ALL Blaze trades (v1, v2, v3, v4)
