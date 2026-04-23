@@ -1,0 +1,2 @@
+symbol,entry_time,exit_time,entry_price,exit_price,quantity,position_type,net_pnl,profit_pct,exit_reason,holding_minutes,max_profit_seen,exit_level,hard_stop_915,confluence_trade,oi_signal_pattern,hybrid_signal_type,entry_reason
+UNIONBANK,2026-04-23T10:38:41.514395,2026-04-23T12:35:29.159517,190.41,189.15,262,SHORT,330.1199999999976,0.6617299511580226,PROFIT_TRAILING_STOP_5MIN,116,0.892810251562412,189.82,194.89,True,STRONG_BEARISH,EXTREME_BEARISH,UNKNOWN
